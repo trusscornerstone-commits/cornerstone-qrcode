@@ -6,7 +6,7 @@ import shutil
 
 # === Configurações ===
 CSV_PATH = "trusses.csv"
-OUTPUT_DIR = "qrcodes"
+OUTPUT_DIR = "templates/qrcodes"
 API_BASE_URL = "https://api.sistema-trusses.com/truss"
 LOGO_PATH = "cornerstone_logo.png"
 FONT_PATH = "arial.ttf"

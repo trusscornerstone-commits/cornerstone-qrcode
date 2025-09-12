@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cornerstone - Home</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="logo">
+    <img src="Cornerstone_logo.png" alt="Cornerstone Logo">
+  </div>
+
+  <div class="home-container">
+  <h2>Menu</h2>
+
+  <button class="menu-btn" onclick="window.location.href='estoque.html'">
+    <!-- Ícone de estoque / warehouse SVG -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+      <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2z"/>
+    </svg>
+    Estoque
+  </button>
+
+  <button class="menu-btn" id="qrBtn">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+      <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zM13 3h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zM13 13h8v8h-8v-8zm2 2v4h4v-4h-4z"/>
+    </svg>
+    Escanear QR Code
+  </button>
+
+  <button class="menu-btn" id="historyBtn">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+      <path d="M13 3a9 9 0 0 0-9 9H1l4 4 4-4H5a7 7 0 1 1 7 7 6.96 6.96 0 0 1-4.95-2.05l-1.42 1.42A8.94 8.94 0 1 0 13 3z"/>
+    </svg>
+    Histórico
+  </button>
+
+  <button class="menu-btn" id="reportBtn">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+      <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2z"/>
+    </svg>
+    Relatórios
+  </button>
+    <div class="video-preview" id="videoPreview"></div>
+  </div>
+
+  <div class="footer"></div>
+
+  <script>
+    const cameraBtn = document.getElementById('cameraBtn');
+    const videoPreview = document.getElementById('videoPreview');
+
+    cameraBtn.addEventListener('click', async () => {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const video = document.createElement('video');
+          video.srcObject = stream;
+          video.autoplay = true;
+          video.playsInline = true;
+          videoPreview.innerHTML = ''; // limpa preview antigo
+          videoPreview.appendChild(video);
+        } catch (err) {
+          alert('Não foi possível acessar a câmera: ' + err.message);
+        }
+      } else {
+        alert('Seu navegador não suporta acesso à câmera.');
+      }
+    });
+
+    // Aqui você pode adicionar listeners para outros botões futuramente
+  </script>
+</body>
+</html>
