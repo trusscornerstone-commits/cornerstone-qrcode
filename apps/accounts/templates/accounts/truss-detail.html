@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truss Detail</title>
+  <link rel="stylesheet" href="truss-detail.css">
+</head>
+<body>
+  <div class="container">
+    <div class="title">T1</div>
+
+    <img src="truss.jpg" alt="Truss" class="image">
+
+    <button id="statusBtn" class="status-btn ongoing">Truss Ongoing</button>
+
+    <h3>Description</h3>
+    <p class="description">
+      This is an example of how the scan will open a section of your app.
+      Where you can set up all the information about your product and trigger more actions.
+      Here we are using a modal page for example.
+    </p>
+
+    <div class="details">
+      <div><strong>Job</strong>250002</div>
+      <div><strong>Truss Type</strong>Flat</div>
+      <div><strong>Qty</strong>10</div>
+      <div><strong>Address</strong>27 Guild Street</div>
+      <div><strong>Length</strong>22-2-8</div>
+    </div>
+  </div>
+
+  <script>
+    const statusBtn = document.getElementById("statusBtn");
+
+    statusBtn.addEventListener("click", () => {
+      if (statusBtn.classList.contains("ongoing")) {
+        statusBtn.classList.remove("ongoing");
+        statusBtn.classList.add("completed");
+        statusBtn.textContent = "Completed";
+      } else {
+        statusBtn.classList.remove("completed");
+        statusBtn.classList.add("ongoing");
+        statusBtn.textContent = "Truss Ongoing";
+      }
+    });
+  </script>
+</body>
+</html>
