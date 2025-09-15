@@ -47,29 +47,7 @@
 
   <div class="footer"></div>
 
-  <script>
-    const cameraBtn = document.getElementById('cameraBtn');
-    const videoPreview = document.getElementById('videoPreview');
+  <script src="scan_truss.js"></script>
 
-    cameraBtn.addEventListener('click', async () => {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          const video = document.createElement('video');
-          video.srcObject = stream;
-          video.autoplay = true;
-          video.playsInline = true;
-          videoPreview.innerHTML = ''; // limpa preview antigo
-          videoPreview.appendChild(video);
-        } catch (err) {
-          alert('Não foi possível acessar a câmera: ' + err.message);
-        }
-      } else {
-        alert('Seu navegador não suporta acesso à câmera.');
-      }
-    });
-
-    // Aqui você pode adicionar listeners para outros botões futuramente
-  </script>
 </body>
 </html>
