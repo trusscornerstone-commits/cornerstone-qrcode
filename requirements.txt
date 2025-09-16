@@ -1,0 +1,10 @@
+openpyxl
+pandas
+qrcode[pil]
+pillow
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic
+
