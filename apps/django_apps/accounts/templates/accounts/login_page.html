@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cornerstone - Login</title>
-  <link rel="stylesheet" href="styles.css">
+  <!-- <link rel="stylesheet" href="styles.css"> -->
+   {% load static %}
+  <link rel="stylesheet" href="{% static 'accounts/styles.css' %}">
 </head>
 <body>
   <div class="logo">
-    <img src="cornerstone_logo.png" alt="Cornerstone Logo">
+    <img src="{% static 'accounts/cornerstone_logo.png' %}" alt="Cornerstone Logo">
   </div>
 
   <div class="login-container">
@@ -28,7 +30,7 @@
   </div>
 
   <div class="footer"></div>
-  <script src="login.js"></script>
+  <script src="{% static 'accounts/login.js' %}"></script>
 
 </body>
 </html>
