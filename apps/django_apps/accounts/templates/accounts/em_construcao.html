@@ -1,0 +1,29 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Página em Construção</title>
+  <link rel="stylesheet" href="{% static 'accounts/styles.css' %}">
+</head>
+<body>
+  <div class="logo">
+    <img src="{% static 'accounts/cornerstone_logo.png' %}" alt="Logo Cornerstone">
+  </div>
+
+  <div class="home-container" style="text-align: center; padding: 50px;">
+    <h1>🚧 Página em Construção 🚧</h1>
+    <p>Estamos trabalhando para disponibilizar essa funcionalidade em breve.</p>
+    <button id="backBtn" class="menu-btn" style="margin-top: 20px;">
+  Voltar para o Menu
+</button>
+
+<script>
+  document.getElementById("backBtn").addEventListener("click", function () {
+    window.location.href = "{% url 'home' %}";
+  });
+</script>
+
+  </div>
+</body>
+</html>

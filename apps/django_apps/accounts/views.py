@@ -24,3 +24,9 @@ def home(request):
 @login_required(login_url='login')
 def truss_detail(request):
     return render(request, "accounts/truss-detail.html")
+
+from django.shortcuts import render
+
+@login_required(login_url='login')
+def em_construcao(request):
+    return render(request, 'accounts/em_construcao.html')
