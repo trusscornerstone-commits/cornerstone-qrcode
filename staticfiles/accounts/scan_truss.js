@@ -20,13 +20,12 @@ qrBtn.addEventListener('click', async () => {
       // Encerrar o stream para liberar a câmera
       stream.getTracks().forEach(track => track.stop());
 
-      //window.location.href = "{% url 'truss_detail' %}";
-      window.location.href = trussDetailUrl;
+      window.location.href = "{% url 'truss_detail' %}";
     } catch (err) {
       console.warn('Câmera não acessível, redirecionando mesmo assim:', err.message);
-      window.location.href = trussDetailUrl;
+      window.location.href = "{% url 'truss_detail' %}";
     }
   } else {
-    window.location.href = trussDetailUrl;
+    window.location.href = "{% url 'truss_detail' %}";
   }
 });

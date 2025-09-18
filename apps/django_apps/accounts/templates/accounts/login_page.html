@@ -14,7 +14,8 @@
   </div>
 
   <div class="login-container">
-    <form method="post">
+    <form method="post" action="">
+      {% csrf_token %}
       <label>Email</label>
       <input type="email" name="email" placeholder="Value" required>
 
@@ -22,6 +23,13 @@
       <input type="password" name="password" placeholder="Value" required>
 
       <button type="submit">Sign In</button>
+    {% if messages %}
+        <ul>
+          {% for msg in messages %}
+            <li>{{ msg }}</li>
+          {% endfor %}
+        </ul>
+    {% endif %}
     </form>
 
     <div class="forgot">
@@ -30,7 +38,7 @@
   </div>
 
   <div class="footer"></div>
-  <script src="{% static 'accounts/login.js' %}"></script>
+  <!-- <script src="{% static 'accounts/login.js' %}"></script> -->
 
 </body>
 </html>

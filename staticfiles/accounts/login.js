@@ -14,7 +14,7 @@ form.addEventListener("submit", function(e) {
 
   if(email === USER && password === PASS){
     // se estiver correto, redireciona
-    window.location.href = "home.html";
+    window.location.href = "/home/";
   } else {
     alert("Email ou senha incorretos!");
   }
