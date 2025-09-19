@@ -4,6 +4,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.http import HttpResponse
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required  # só usuários staff/admin conseguem acessar
+def list_users(request):
+    users = list(User.objects.values('username', 'email'))
+    return JsonResponse({'users': users})
 
 # LOGIN VIEW
 def login_page(request):
