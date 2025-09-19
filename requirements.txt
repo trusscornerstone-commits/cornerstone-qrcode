@@ -1,12 +1,21 @@
-gunicorn
+# Web server para Django
+gunicorn==21.2.0
+
+# Django e utilitários de banco
+django==4.2.11
+dj-database-url==2.1.0
+psycopg2-binary==2.9.9  # Driver PostgreSQL para produção
+
+# Manipulação de planilhas
 openpyxl
 pandas
+
+# QR code e imagem
 qrcode[pil]
 pillow
+
+# FastAPI backend separado (opcional)
 fastapi
 uvicorn
 sqlalchemy
-psycopg2-binary==2.9.9
 pydantic
-django==4.2.5
-dj-database-url==2.1.0
