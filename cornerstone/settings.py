@@ -36,7 +36,8 @@ if not DEBUG:
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["cornerstone-app.onrender.com", "localhost", "127.0.0.1"]
+
 
 
 # Application definition
@@ -143,12 +144,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-ALLOWED_HOSTS = ['django', 'localhost', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost",
-    "http://127.0.0.1",
+    "https://cornerstone-app.onrender.com",
 ]
+
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
