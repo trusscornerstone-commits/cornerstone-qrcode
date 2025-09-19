@@ -1,1 +1,1 @@
-web: gunicorn cornerstone.wsgi
+gunicorn cornerstone.wsgi
