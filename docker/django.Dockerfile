@@ -18,5 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código da aplicação
 COPY . .
 
-# Scripts de entrada
+# Permissões para scripts de entrada
 RUN chmod +x docker/entrypoints/*.sh
+
+# Comando de entrada (definido no docker-compose ou Render)
+CMD ["docker/entrypoints/start.sh"]

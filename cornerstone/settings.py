@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import dj_database_url
-
 from pathlib import Path
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -96,10 +95,7 @@ WSGI_APPLICATION = 'cornerstone.wsgi.application'
 }"""
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://postgres:postgres@localhost:5432/mysite',
-        conn_max_age=600
-    )
+    'default': dj_database_url.config(conn_max_age=600)    
 }
 
 
