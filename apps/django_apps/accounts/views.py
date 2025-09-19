@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.http import HttpResponse
 
 # LOGIN VIEW
 def login_page(request):
@@ -37,3 +38,6 @@ def em_construcao(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+def health(request):
+    return HttpResponse("OK", status=200)
