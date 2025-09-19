@@ -1,3 +1,4 @@
+pip freeze > requirements.txt
 openpyxl
 pandas
 qrcode[pil]
@@ -5,7 +6,7 @@ pillow
 fastapi
 uvicorn
 sqlalchemy
-psycopg2-binary
+psycopg2-binary==2.9.9
 pydantic
-django
-
+django==4.2.5
+dj-database-url==2.1.0
