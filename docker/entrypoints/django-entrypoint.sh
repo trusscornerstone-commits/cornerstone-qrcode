@@ -1,7 +1,10 @@
 #!/bin/sh
 set -e
 
-# Defaults
+PORT="${PORT:-8000}"
+GUNICORN_WORKERS="${GUNICORN_WORKERS:-3}"
+GUNICORN_TIMEOUT="${GUNICORN_TIMEOUT:-60}"
+
 DB_HOST="${DB_HOST:-db}"
 DB_PORT="${DB_PORT:-5432}"
 DB_USER="${DB_USER:-cornerstone}"
@@ -14,28 +17,25 @@ for i in $(seq 1 40); do
     fi
     echo "Aguardando ($i)..."
     sleep 1
-done
+done  # fim do for
 
-# Rodar migrations uma vez (opcionalmente controlado por var)
 if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
     echo "Aplicando migrations..."
     python manage.py migrate --noinput
-fi
+fi  # fecha RUN_MIGRATIONS
 
-# Em DEV (DEBUG=1) não precisa collectstatic a cada start
 if [ "${RUN_COLLECTSTATIC:-0}" = "1" ]; then
     echo "Collectstatic..."
     python manage.py collectstatic --noinput
-fi
+fi  # fecha RUN_COLLECTSTATIC
 
-# Health endpoint simples (se quiser usar)
-# python manage.py shell -c "from django.urls import get_resolver; print('URLs carregadas:', len(get_resolver().url_patterns))"
-
-echo "Iniciando Django..."
+echo "Iniciando Django (PORT=$PORT)..."
 if [ "${DJANGO_DEBUG}" = "1" ]; then
-    # Sem autoreload? (para evitar restart loops) -> adicione --noreload se quiser
-    exec python manage.py runserver 0.0.0.0:8000
+    exec python manage.py runserver 0.0.0.0:${PORT}
 else
-    # Produção: usar gunicorn
-    exec gunicorn cornerstone.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2 --timeout 60
-fi
+    exec gunicorn cornerstone.asgi:application \
+        -k uvicorn.workers.UvicornWorker \
+        --bind 0.0.0.0:${PORT} \
+        --workers "${GUNICORN_WORKERS}" \
+        --timeout "${GUNICORN_TIMEOUT}"
+fi  # fecha bloco principal (DEBUG)
