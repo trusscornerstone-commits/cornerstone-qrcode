@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-PORT="${PORT:-8000}"          # Render injeta PORT (ex: 10000)
+PORT="${PORT:-8000}"
 GUNICORN_WORKERS="${GUNICORN_WORKERS:-3}"
 GUNICORN_TIMEOUT="${GUNICORN_TIMEOUT:-60}"
 
@@ -29,11 +29,36 @@ if [ "${RUN_COLLECTSTATIC:-0}" = "1" ]; then
     python manage.py collectstatic --noinput
 fi
 
-echo "Iniciando Django (PORT=$PORT DEBUG=${DJANGO_DEBUG:-?})..."
+# --- BLOCO NOVO: criação de superusuário idempotente ---
+if [ "${CREATE_SUPERUSER:-0}" = "1" ]; then
+  echo "Verificando/gerando superusuário..."
+  python - <<'PY'
+import os
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError
+
+User = get_user_model()
+username = os.environ.get("SUPERUSER_USERNAME", "admin")
+email = os.environ.get("SUPERUSER_EMAIL", "admin@example.com")
+password = os.environ.get("SUPERUSER_PASSWORD", "ChangeMe123!")
+
+u, created = User.objects.get_or_create(username=username, defaults={"email": email})
+# Caso o modelo use email como identificador principal, adapte acima.
+u.email = email
+u.is_staff = True
+u.is_superuser = True
+u.set_password(password)
+u.save()
+print("Superusuário", "CRIADO" if created else "ATUALIZADO", f"-> {username} / {email}")
+PY
+  echo "Superusuário pronto. (REMOVA CREATE_SUPERUSER depois de confirmar login!)"
+fi
+# --- FIM BLOCO NOVO ---
+
+echo "Iniciando Django (PORT=$PORT)..."
 if [ "${DJANGO_DEBUG}" = "1" ]; then
     exec python manage.py runserver 0.0.0.0:${PORT}
 else
-    # PRODUÇÃO via ASGI (Django + FastAPI) usando UvicornWorker
     exec gunicorn cornerstone.asgi:application \
         -k uvicorn.workers.UvicornWorker \
         --bind 0.0.0.0:${PORT} \
