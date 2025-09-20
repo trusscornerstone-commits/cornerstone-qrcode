@@ -21,11 +21,15 @@ def env_list(name, default=None, sep=","):
     return [v.strip() for v in raw.split(sep) if v.strip()]
 
 # ==== Configurações básicas ====
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-" + get_random_secret_key())
+#SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-" + get_random_secret_key())
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "change-me-in-prod")
 
-DEBUG = env_bool("DJANGO_DEBUG", True)
+DEBUG = env_bool("DJANGO_DEBUG", False)
 
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
+ALLOWED_HOSTS = [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS","").split(",") if h]
+
+_raw_csrf = os.environ.get("CSRF_TRUSTED_ORIGINS","")
+CSRF_TRUSTED_ORIGINS = [o for o in _raw_csrf.split(",") if o]
 
 # ==== Aplicativos ====
 INSTALLED_APPS = [
@@ -51,6 +55,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "cornerstone.urls"
+WSGI_APPLICATION = "cornerstone.wsgi.application"  # Mantido para manage.py
+ASGI_APPLICATION = "cornerstone.asgi.application"  # Referência se precisar (Channels, etc.)
 
 # ==== Templates ====
 TEMPLATES = [
@@ -69,17 +75,11 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "cornerstone.wsgi.application"
 
 # ==== Banco de Dados ====
+DATABASE_URL = os.environ.get("DATABASE_URL")
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get(
-            "DATABASE_URL",
-            "postgres://cornerstone:cornerstone@db:5432/cornerstone"
-        ),
-        conn_max_age=600,
-    )
+    "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
 }
 
 # ==== Validação de Senhas ====
@@ -101,7 +101,6 @@ USE_TZ = True
 # ==== Arquivos Estáticos ====
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-#STATICFILES_DIRS = [BASE_DIR / "static"]  # certifique-se de que esta pasta existe
 
 if DEBUG:
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
@@ -127,7 +126,7 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = "DENY"
+    #X_FRAME_OPTIONS = "DENY"
     SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 # ==== Backends de Autenticação ====
