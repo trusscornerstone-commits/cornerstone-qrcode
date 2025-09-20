@@ -3,43 +3,42 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.http import HttpResponse
-from django.contrib.auth.models import User
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import get_user_model
+from django.http import JsonResponse
 
-@staff_member_required  # só usuários staff/admin conseguem acessar
+User = get_user_model()
+
+@staff_member_required
 def list_users(request):
     users = list(User.objects.values('username', 'email'))
     return JsonResponse({'users': users})
 
-# LOGIN VIEW
 def login_page(request):
     if request.method == "POST":
-        email = request.POST.get("email")
+        identifier = request.POST.get("username") or request.POST.get("email")
         password = request.POST.get("password")
 
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, username=identifier, password=password)
         if user is not None:
             login(request, user)
             next_url = request.GET.get('next')
-            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+            if next_url and url_has_allowed_host_and_scheme(next_url, {request.get_host()}):
                 return redirect(next_url)
             return redirect("home")
-        else:
-            messages.error(request, "Email ou senha inválidos")
+        messages.error(request, "Email/Usuário ou senha inválidos")
     return render(request, "accounts/login_page.html")
 
-# VIEWS PROTEGIDAS
-@login_required(login_url='login')
+@login_required
 def home(request):
     return render(request, "accounts/home.html")
 
-@login_required(login_url='login')
+@login_required
 def truss_detail(request):
     return render(request, "accounts/truss-detail.html")
 
-@login_required(login_url='login')
+@login_required
 def em_construcao(request):
     return render(request, 'accounts/em_construcao.html')
 
@@ -48,4 +47,4 @@ def logout_view(request):
     return redirect('login')
 
 def health(request):
-    return HttpResponse("OK", status=200)
+    return JsonResponse({"status": "ok"})

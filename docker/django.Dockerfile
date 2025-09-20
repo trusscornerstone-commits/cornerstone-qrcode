@@ -1,25 +1,24 @@
 FROM python:3.11-slim
 
-# Variáveis de ambiente
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Instala dependências do sistema, incluindo pg_isready
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-client netcat-openbsd curl && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Instalar dependências do sistema
-RUN apt-get update && apt-get install -y \
-    build-essential libpq-dev curl && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copiar dependências
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código da aplicação
 COPY . .
 
-# Permissões para scripts de entrada
-RUN chmod +x docker/entrypoints/*.sh
+# Garantir permissão e line endings
+RUN chmod +x docker/entrypoints/django-entrypoint.sh \
+    && sed -i 's/\r$//' docker/entrypoints/django-entrypoint.sh
 
-# Comando de entrada (definido no docker-compose ou Render)
-CMD ["docker/entrypoints/start.sh"]
+EXPOSE 8000
+
+ENTRYPOINT ["/app/docker/entrypoints/django-entrypoint.sh"]

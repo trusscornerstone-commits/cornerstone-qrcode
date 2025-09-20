@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cornerstone - Login</title>
-  <!-- <link rel="stylesheet" href="styles.css"> -->
-   {% load static %}
+  {% load static %}
   <link rel="stylesheet" href="{% static 'accounts/styles.css' %}">
 </head>
 <body>
@@ -14,22 +13,23 @@
   </div>
 
   <div class="login-container">
-    <form method="post" action="">
+    <form method="post" novalidate>
       {% csrf_token %}
-      <label>Email</label>
-      <input type="email" name="email" placeholder="Value" required>
+      <label for="id_email">Email</label>
+      <input id="id_email" type="email" name="email" placeholder="you@example.com" required autocomplete="username">
 
-      <label>Password</label>
-      <input type="password" name="password" placeholder="Value" required>
+      <label for="id_password">Password</label>
+      <input id="id_password" type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
 
       <button type="submit">Sign In</button>
-    {% if messages %}
-        <ul>
+
+      {% if messages %}
+        <ul class="messages">
           {% for msg in messages %}
             <li>{{ msg }}</li>
           {% endfor %}
         </ul>
-    {% endif %}
+      {% endif %}
     </form>
 
     <div class="forgot">
@@ -38,7 +38,5 @@
   </div>
 
   <div class="footer"></div>
-  <!-- <script src="{% static 'accounts/login.js' %}"></script> -->
-
 </body>
 </html>
