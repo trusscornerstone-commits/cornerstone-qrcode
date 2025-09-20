@@ -23,6 +23,8 @@ def env_list(name, default=None, sep=","):
 # ==== Configurações básicas ====
 #SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-" + get_random_secret_key())
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "change-me-in-prod")
+DJANGO_ALLOWED_HOSTS = 'https://cornerstone-app.onrender.com'
+CSRF_TRUSTED_ORIGINS = ['https://cornerstone-app.onrender.com']
 
 DEBUG = env_bool("DJANGO_DEBUG", False)
 
