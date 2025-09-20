@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-PORT="${PORT:-8000}"
+PORT="${PORT:-8000}"          # Render injeta PORT (ex: 10000)
 GUNICORN_WORKERS="${GUNICORN_WORKERS:-3}"
 GUNICORN_TIMEOUT="${GUNICORN_TIMEOUT:-60}"
 
@@ -17,25 +17,26 @@ for i in $(seq 1 40); do
     fi
     echo "Aguardando ($i)..."
     sleep 1
-done  # fim do for
+done
 
 if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
     echo "Aplicando migrations..."
     python manage.py migrate --noinput
-fi  # fecha RUN_MIGRATIONS
+fi
 
 if [ "${RUN_COLLECTSTATIC:-0}" = "1" ]; then
     echo "Collectstatic..."
     python manage.py collectstatic --noinput
-fi  # fecha RUN_COLLECTSTATIC
+fi
 
-echo "Iniciando Django (PORT=$PORT)..."
+echo "Iniciando Django (PORT=$PORT DEBUG=${DJANGO_DEBUG:-?})..."
 if [ "${DJANGO_DEBUG}" = "1" ]; then
     exec python manage.py runserver 0.0.0.0:${PORT}
 else
+    # PRODUÇÃO via ASGI (Django + FastAPI) usando UvicornWorker
     exec gunicorn cornerstone.asgi:application \
         -k uvicorn.workers.UvicornWorker \
         --bind 0.0.0.0:${PORT} \
         --workers "${GUNICORN_WORKERS}" \
         --timeout "${GUNICORN_TIMEOUT}"
-fi  # fecha bloco principal (DEBUG)
+fi
