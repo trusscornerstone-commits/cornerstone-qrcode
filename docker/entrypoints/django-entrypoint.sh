@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+# ------------------------------------------------------------------
+# Configurações básicas (valores default caso não venham do ambiente)
+# ------------------------------------------------------------------
 PORT="${PORT:-8000}"
 GUNICORN_WORKERS="${GUNICORN_WORKERS:-3}"
 GUNICORN_TIMEOUT="${GUNICORN_TIMEOUT:-60}"
@@ -19,43 +22,96 @@ for i in $(seq 1 40); do
     sleep 1
 done
 
+# ------------------------------------------------------------------
+# Migrations
+# ------------------------------------------------------------------
 if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
     echo "Aplicando migrations..."
     python manage.py migrate --noinput
+else
+    echo "RUN_MIGRATIONS=0 -> pulando migrations."
 fi
 
+# ------------------------------------------------------------------
+# Collectstatic (normalmente só em build, mas deixo opcional)
+# ------------------------------------------------------------------
 if [ "${RUN_COLLECTSTATIC:-0}" = "1" ]; then
-    echo "Collectstatic..."
+    echo "Executando collectstatic..."
     python manage.py collectstatic --noinput
 fi
 
-# --- BLOCO NOVO: criação de superusuário idempotente ---
+# ------------------------------------------------------------------
+# Criação / atualização idempotente de superusuário (USANDO VARIÁVEIS)
+# Variáveis esperadas (no Render):
+#   CREATE_SUPERUSER=1
+#   SUPERUSER_USERNAME=admin
+#   SUPERUSER_EMAIL=admin@example.com
+#   SUPERUSER_PASSWORD=SenhaForte!2025
+# Opcional:
+#   SUPERUSER_FORCE_RESET=1  (para forçar redefinição de senha)
+# Depois de testar login, REMOVER:
+#   CREATE_SUPERUSER e SUPERUSER_PASSWORD
+# ------------------------------------------------------------------
 if [ "${CREATE_SUPERUSER:-0}" = "1" ]; then
-  echo "Verificando/gerando superusuário..."
+  echo "[bootstrap-admin] Verificando superusuário..."
   python - <<'PY'
 import os
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
+from django.db import transaction
 
 User = get_user_model()
-username = os.environ.get("SUPERUSER_USERNAME", "admin")
-email = os.environ.get("SUPERUSER_EMAIL", "admin@example.com")
-password = os.environ.get("SUPERUSER_PASSWORD", "ChangeMe123!")
 
-u, created = User.objects.get_or_create(username=username, defaults={"email": email})
-# Caso o modelo use email como identificador principal, adapte acima.
-u.email = email
-u.is_staff = True
-u.is_superuser = True
-u.set_password(password)
-u.save()
-print("Superusuário", "CRIADO" if created else "ATUALIZADO", f"-> {username} / {email}")
+username = (os.environ.get("SUPERUSER_USERNAME") or "admin").strip()
+email = (os.environ.get("SUPERUSER_EMAIL") or "admin@example.com").strip()
+password = os.environ.get("SUPERUSER_PASSWORD")
+force_reset = os.environ.get("SUPERUSER_FORCE_RESET", "0") == "1"
+
+if not username:
+    raise SystemExit("[bootstrap-admin] ERRO: SUPERUSER_USERNAME vazio.")
+with transaction.atomic():
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={"email": email}
+    )
+    changed = False
+
+    # Atualiza email se mudou
+    if user.email != email:
+        user.email = email
+        changed = True
+
+    if created:
+        if not password:
+            raise SystemExit("[bootstrap-admin] ERRO: SUPERUSER_PASSWORD não fornecida para criar novo superusuário.")
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(password)
+        user.save()
+        print(f"[bootstrap-admin] Superusuário CRIADO: {username}")
+    else:
+        if force_reset and password:
+            user.set_password(password)
+            changed = True
+            print(f"[bootstrap-admin] Senha redefinida (FORCE_RESET=1) para {username}")
+        if (not user.is_staff) or (not user.is_superuser):
+            user.is_staff = True
+            user.is_superuser = True
+            changed = True
+            print(f"[bootstrap-admin] Ajustadas flags staff/superuser para {username}")
+        if changed:
+            user.save()
+            print(f"[bootstrap-admin] Superusuário ATUALIZADO: {username}")
+        else:
+            print(f"[bootstrap-admin] Superusuário OK (sem mudanças): {username}")
+
+print("[bootstrap-admin] IMPORTANTE: Remova CREATE_SUPERUSER e SUPERUSER_PASSWORD após validar o login.")
 PY
-  echo "Superusuário pronto. (REMOVA CREATE_SUPERUSER depois de confirmar login!)"
 fi
-# --- FIM BLOCO NOVO ---
 
-echo "Iniciando Django (PORT=$PORT)..."
+# ------------------------------------------------------------------
+# Start do servidor
+# ------------------------------------------------------------------
+echo "Iniciando Django (PORT=$PORT DEBUG=${DJANGO_DEBUG:-?})..."
 if [ "${DJANGO_DEBUG}" = "1" ]; then
     exec python manage.py runserver 0.0.0.0:${PORT}
 else
