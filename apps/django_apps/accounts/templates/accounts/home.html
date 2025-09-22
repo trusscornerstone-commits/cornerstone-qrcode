@@ -1,96 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
+  {% load static %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Cornerstone - Home</title>
-  {% load static %}
   <link rel="stylesheet" href="{% static 'accounts/styles.css' %}">
   <style>
-    /* Estilos mínimos para visualizar claramente o container do vídeo */
-    #videoPreview {
-      margin-top: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: stretch;
+    .logo { text-align:center; margin:14px 0 8px; }
+    .home-container { max-width:420px; margin:0 auto; padding:0 18px 40px; text-align:center; }
+    .menu-btn {
+      width:100%; display:flex; align-items:center; justify-content:flex-start;
+      gap:6px; background:#1d2b3a; color:#fff; border:1px solid #2c3e50;
+      border-radius:10px; padding:14px 16px; margin:8px 0; font-size:15px;
+      cursor:pointer; transition:background .25s, transform .15s;
     }
-    #videoPreview video {
-      width: 100%;
-      max-height: 60vh;
-      object-fit: cover;
-      background:#000;
-      border:1px solid #333;
-      border-radius:8px;
-    }
-    #videoPreview button {
-      padding: 8px 12px;
-      background:#444;
-      color:#fff;
-      border:1px solid #222;
-      border-radius:6px;
-    }
+    .menu-btn:hover { background:#254158; }
+    .menu-btn:active { transform:scale(.97); }
+    h2 { font-weight:600; font-size:1.3rem; margin:10px 0 14px; color:#e2e8f0; letter-spacing:.5px; }
   </style>
 </head>
 <body>
   <div class="logo">
-    <img src="{% static 'accounts/cornerstone_logo.png' %}" alt="Cornerstone Logo">
+    <img src="{% static 'accounts/cornerstone_logo.png' %}" alt="Cornerstone Logo" style="max-width:180px;height:auto;">
   </div>
 
   <div class="home-container">
     <h2>Menu</h2>
 
     <button class="menu-btn" id="estoqueBtn" type="button">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="#fff" viewBox="0 0 24 24">
         <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2z"/>
       </svg>
       Estoque
     </button>
 
     <button class="menu-btn" id="qrBtn" type="button">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="#fff" viewBox="0 0 24 24">
         <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zM13 3h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zM13 13h8v8h-8v-8zm2 2v4h4v-4h-4z"/>
       </svg>
       Escanear QR Code
     </button>
 
     <button class="menu-btn" id="historyBtn" type="button">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="#fff" viewBox="0 0 24 24">
         <path d="M13 3a9 9 0 0 0-9 9H1l4 4 4-4H5a7 7 0 1 1 7 7 6.96 6.96 0 0 1-4.95-2.05l-1.42 1.42A8.94 8.94 0 1 0 13 3z"/>
       </svg>
       Histórico
     </button>
 
     <button class="menu-btn" id="reportBtn" type="button">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="#fff" viewBox="0 0 24 24">
         <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2z"/>
       </svg>
       Relatórios
     </button>
-
-    <div class="video-preview" id="videoPreview"></div>
   </div>
 
-  <div class="footer"></div>
-
   <script>
-    const trussDetailUrl = "{% url 'truss_detail' %}";
-    const emConstrucaoUrl = "{% url 'em_construcao' %}";
+    window.APP_CONFIG = {
+      urls: {
+        trussDetail: "{% url 'truss_detail' pk=0 %}".replace(/0\/?$/, ""),
+        scanTruss: "{% url 'scan_truss' %}",
+        emConstrucao: "{% url 'em_construcao' %}"
+      }
+    };
   </script>
-
-  <!-- Versão debug: mude o nome ou adicione ?v=2 para quebrar cache -->
-  <script src="{% static 'accounts/scan_truss.js' %}?v=2"></script>
-
   <script>
-    document.getElementById('estoqueBtn').addEventListener('click', () => {
-      window.location.href = emConstrucaoUrl;
-    });
-    document.getElementById('historyBtn').addEventListener('click', () => {
-      window.location.href = emConstrucaoUrl;
-    });
-    document.getElementById('reportBtn').addEventListener('click', () => {
-      window.location.href = emConstrucaoUrl;
-    });
+    const { scanTruss, emConstrucao } = window.APP_CONFIG.urls;
+    document.getElementById('qrBtn').addEventListener('click', () => { window.location.href = scanTruss; });
+    document.getElementById('estoqueBtn').addEventListener('click', () => { window.location.href = emConstrucao; });
+    document.getElementById('historyBtn').addEventListener('click', () => { window.location.href = emConstrucao; });
+    document.getElementById('reportBtn').addEventListener('click', () => { window.location.href = emConstrucao; });
   </script>
 </body>
 </html>

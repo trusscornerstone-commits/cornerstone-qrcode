@@ -48,3 +48,9 @@ def logout_view(request):
 
 def health(request):
     return JsonResponse({"status": "ok"})
+
+def scan_truss(request):
+    """
+    Página dedicada ao scanner.
+    """
+    return render(request, 'scan_truss.html')
