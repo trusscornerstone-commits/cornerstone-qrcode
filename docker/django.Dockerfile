@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -6,22 +6,25 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Dependências de build (para psycopg2, pillow c libs, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential curl libpq-dev \
+    build-essential libpq-dev curl \
     && rm -rf /var/lib/apt/lists/*
 
+# (Opcional) Atualiza pip
+RUN pip install --no-cache-dir --upgrade pip
+
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
+
+# (Opcional) Remover toolchain se não precisar mais (cuidado se instalar algo que exige compilação dinâmica depois)
+# RUN apt-get purge -y build-essential && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 COPY . .
 
-# Ajusta permissões do entrypoint
 RUN chmod +x docker/entrypoints/django-entrypoint.sh \
     && sed -i 's/\r$//' docker/entrypoints/django-entrypoint.sh
-
-# (Opcional) Coletar estáticos no build para ManifestStorage:
-# ENV DJANGO_DEBUG=0 DJANGO_SETTINGS_MODULE=cornerstone.settings
-# RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
