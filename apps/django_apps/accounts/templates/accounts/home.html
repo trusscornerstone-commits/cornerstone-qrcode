@@ -2,11 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Cornerstone - Home</title>
-  <!-- <link rel="stylesheet" href="styles.css"> -->
-   {% load static %}
+  {% load static %}
   <link rel="stylesheet" href="{% static 'accounts/styles.css' %}">
+  <style>
+    /* Estilos mínimos para visualizar claramente o container do vídeo */
+    #videoPreview {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: stretch;
+    }
+    #videoPreview video {
+      width: 100%;
+      max-height: 60vh;
+      object-fit: cover;
+      background:#000;
+      border:1px solid #333;
+      border-radius:8px;
+    }
+    #videoPreview button {
+      padding: 8px 12px;
+      background:#444;
+      color:#fff;
+      border:1px solid #222;
+      border-radius:6px;
+    }
+  </style>
 </head>
 <body>
   <div class="logo">
@@ -14,65 +38,59 @@
   </div>
 
   <div class="home-container">
-  <h2>Menu</h2>
+    <h2>Menu</h2>
 
-  <button class="menu-btn" id="estoqueBtn">
-    <!-- Ícone de estoque / warehouse SVG -->
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
-      <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2z"/>
-    </svg>
-    Estoque
-  </button>
+    <button class="menu-btn" id="estoqueBtn" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+        <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2z"/>
+      </svg>
+      Estoque
+    </button>
 
-  <button class="menu-btn" id="qrBtn">
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
-    <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zM13 3h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zM13 13h8v8h-8v-8zm2 2v4h4v-4h-4z"/>
-  </svg>
-  Escanear QR Code
-</button>
+    <button class="menu-btn" id="qrBtn" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+        <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zM13 3h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zM13 13h8v8h-8v-8zm2 2v4h4v-4h-4z"/>
+      </svg>
+      Escanear QR Code
+    </button>
 
-  <button class="menu-btn" id="historyBtn">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
-      <path d="M13 3a9 9 0 0 0-9 9H1l4 4 4-4H5a7 7 0 1 1 7 7 6.96 6.96 0 0 1-4.95-2.05l-1.42 1.42A8.94 8.94 0 1 0 13 3z"/>
-    </svg>
-    Histórico
-  </button>
+    <button class="menu-btn" id="historyBtn" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+        <path d="M13 3a9 9 0 0 0-9 9H1l4 4 4-4H5a7 7 0 1 1 7 7 6.96 6.96 0 0 1-4.95-2.05l-1.42 1.42A8.94 8.94 0 1 0 13 3z"/>
+      </svg>
+      Histórico
+    </button>
 
-  <button class="menu-btn" id="reportBtn">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
-      <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2z"/>
-    </svg>
-    Relatórios
-  </button>
+    <button class="menu-btn" id="reportBtn" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24" style="margin-right:8px;">
+        <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v2H7V7zm0 4h10v2H7v-2z"/>
+      </svg>
+      Relatórios
+    </button>
+
     <div class="video-preview" id="videoPreview"></div>
   </div>
 
   <div class="footer"></div>
 
-  <!-- JavaScript com URLs resolvidas por Django -->
   <script>
     const trussDetailUrl = "{% url 'truss_detail' %}";
     const emConstrucaoUrl = "{% url 'em_construcao' %}";
   </script>
 
-  <!-- Script do QR code -->
-  <script src="{% static 'accounts/scan_truss.js' %}"></script>
+  <!-- Versão debug: mude o nome ou adicione ?v=2 para quebrar cache -->
+  <script src="{% static 'accounts/scan_truss.js' %}?v=2"></script>
 
-  <!-- Redirecionamento dos botões -->
   <script>
     document.getElementById('estoqueBtn').addEventListener('click', () => {
       window.location.href = emConstrucaoUrl;
     });
-
     document.getElementById('historyBtn').addEventListener('click', () => {
       window.location.href = emConstrucaoUrl;
     });
-
     document.getElementById('reportBtn').addEventListener('click', () => {
       window.location.href = emConstrucaoUrl;
     });
   </script>
-   
-
 </body>
 </html>

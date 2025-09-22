@@ -1,126 +1,86 @@
 /**
- * scan_truss.js
- * Melhorias implementadas:
- * - Não interrompe o stream imediatamente.
- * - facingMode 'environment' (câmera traseira quando disponível).
- * - Preview real do vídeo.
- * - Suporte a iniciar/pausar.
- * - Tratamento detalhado de erros.
- * - Possibilidade de integrar leitura de QR (placeholder).
- * - Redireciona apenas quando apropriado (após leitura ou ação do usuário).
- *
- * Requisitos no template:
- *  - Um botão com id="qrBtn"
- *  - Um container para o vídeo com id="videoPreview"
- *  - Variáveis globais definidas no template Django:
- *      const trussDetailUrl = "{% url 'truss_detail' %}";
- *
- * Para realmente decodificar QR:
- *  - Incluir biblioteca (ex: jsQR ou @zxing/browser)
- *  - Implementar a função decodeFrame()
+ * scan_truss.js (DEBUG v2)
+ * Adiciona logs e proteção contra redirecionamentos acidentais.
+ * Data build: 2025-09-22T18:05Z
  */
-
 (function () {
+  console.log("[SCAN] Versão DEBUG v2 carregada.");
   const qrBtn = document.getElementById('qrBtn');
   const videoPreview = document.getElementById('videoPreview');
 
-  // Caso deseje adicionar um botão de parar posteriormente
-  let stopBtn = null;
+  if (!qrBtn) {
+    console.warn("[SCAN] Botão qrBtn não encontrado.");
+    return;
+  }
+
+  // Impedir que outra função capture o clique e redirecione
+  // (ex: listeners adicionados antes ou delegação global)
+  qrBtn.addEventListener('click', (e) => {
+    console.log("[SCAN] Primeiro listener marcador (capturing) executado.");
+  }, { capture: true });
 
   let stream = null;
   let scanning = false;
   let videoEl = null;
   let scanAnimationId = null;
   let lastDecode = null;
-  let decodeThrottleMs = 250;
-  let lastDecodeAttempt = 0;
 
-  /**
-   * Inicia a câmera.
-   */
+  const HARD_BLOCK_REDIRECT = true; // enquanto debug
+
+  function logEvent(name) {
+    console.log(`[SCAN] ${name}`);
+  }
+
   async function startCamera() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert('Este navegador não suporta acesso à câmera.');
+    logEvent("startCamera chamado");
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert("Navegador não suporta câmera.");
       return;
     }
-
-    // Se já está rodando, ignora
     if (stream) {
+      logEvent("Stream já existe.");
       return;
     }
-
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' }, // tenta traseira
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
+        video: { facingMode: { ideal: "environment" } },
         audio: false
       });
-
+      logEvent("Permissão concedida e stream ativo.");
       prepareVideoElement();
       videoEl.srcObject = stream;
-
-      await videoEl.play(); // garante início (iOS precisa disso)
-
+      await videoEl.play();
+      logEvent("Video em reprodução.");
       scanning = true;
-
-      // Inicia loop de leitura (se quiser ativar decodificação depois)
-      // startScanLoop();
-
     } catch (err) {
-      handleCameraError(err);
+      console.error("[SCAN] Erro getUserMedia:", err);
     }
   }
 
-  /**
-   * Cria/limpa o elemento de vídeo dentro do container.
-   */
   function prepareVideoElement() {
-    videoPreview.innerHTML = '';
-
-    videoEl = document.createElement('video');
-    videoEl.setAttribute('playsinline', 'true'); // iOS
-    videoEl.setAttribute('autoplay', 'true');
-    videoEl.setAttribute('muted', 'true'); // ajuda autoplay
+    videoPreview.innerHTML = "";
+    videoEl = document.createElement("video");
+    videoEl.setAttribute("playsinline", "true");
+    videoEl.setAttribute("autoplay", "true");
+    videoEl.setAttribute("muted", "true");
     videoEl.muted = true;
-
-    videoEl.style.width = '100%';
-    videoEl.style.border = '1px solid #333';
-    videoEl.style.borderRadius = '8px';
-    videoEl.style.background = '#000';
-    videoEl.style.objectFit = 'cover';
-
+    videoEl.style.width = "100%";
+    videoEl.style.background = "#000";
+    videoEl.style.border = "1px solid #333";
+    videoEl.style.borderRadius = "8px";
     videoPreview.appendChild(videoEl);
 
-    // Opcional: adicionar botão de cancelar/parar
-    if (!stopBtn) {
-      stopBtn = document.createElement('button');
-      stopBtn.type = 'button';
-      stopBtn.textContent = 'Cancelar';
-      stopBtn.style.marginTop = '8px';
-      stopBtn.addEventListener('click', () => {
-        stopCamera();
-        clearPreview();
-      });
-      videoPreview.appendChild(stopBtn);
-    }
+    const stopBtn = document.createElement("button");
+    stopBtn.textContent = "Parar";
+    stopBtn.type = "button";
+    stopBtn.addEventListener("click", stopCamera);
+    videoPreview.appendChild(stopBtn);
+
+    logEvent("Elemento de vídeo preparado.");
   }
 
-  /**
-   * Limpa a área de preview.
-   */
-  function clearPreview() {
-    videoPreview.innerHTML = '';
-    videoEl = null;
-    stopBtn = null;
-  }
-
-  /**
-   * Para a câmera/stream.
-   */
   function stopCamera() {
+    logEvent("stopCamera chamado");
     scanning = false;
     if (scanAnimationId) {
       cancelAnimationFrame(scanAnimationId);
@@ -129,122 +89,68 @@
     if (stream) {
       stream.getTracks().forEach(t => t.stop());
       stream = null;
+      logEvent("Tracks paradas.");
     }
+    videoPreview.innerHTML = "";
+    videoEl = null;
   }
 
-  /**
-   * Tratamento de erros de getUserMedia.
-   */
-  function handleCameraError(err) {
-    console.error('Erro ao acessar a câmera:', err);
-    let msg = 'Não foi possível acessar a câmera.';
-    switch (err.name) {
-      case 'NotAllowedError':
-        msg = 'Permissão negada. Habilite o acesso à câmera nas configurações do navegador.';
-        break;
-      case 'NotFoundError':
-      case 'OverconstrainedError':
-        msg = 'Nenhuma câmera compatível encontrada neste dispositivo.';
-        break;
-      case 'NotReadableError':
-        msg = 'A câmera está em uso por outro aplicativo.';
-        break;
-      default:
-        msg = `${msg} (${err.name})`;
-    }
-    alert(msg);
-    // Opcional: fallback de redirecionar mesmo assim
-    // window.location.href = trussDetailUrl;
-  }
-
-  /**
-   * Loop de varredura para decodificar (placeholder).
-   * Ative chamando startScanLoop() após iniciar a câmera.
-   */
-  function startScanLoop() {
-    if (!videoEl) return;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    const loop = () => {
-      if (!scanning || videoEl.readyState !== 4) {
-        return;
-      }
-
-      canvas.width = videoEl.videoWidth;
-      canvas.height = videoEl.videoHeight;
-      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-
-      const now = performance.now();
-      if (now - lastDecodeAttempt > decodeThrottleMs) {
-        lastDecodeAttempt = now;
-        try {
-          // Exemplo com jsQR (se adicionar biblioteca):
-          // const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          // const code = jsQR(imageData.data, canvas.width, canvas.height);
-          // if (code && code.data) {
-          //   onQRCodeDetected(code.data);
-          //   return;
-          // }
-        } catch (e) {
-          console.warn('Falha durante decodificação:', e);
-        }
-      }
-
-      scanAnimationId = requestAnimationFrame(loop);
-    };
-
-    scanAnimationId = requestAnimationFrame(loop);
-  }
-
-  /**
-   * Chamada quando um QR é detectado (integrar a biblioteca e chamar aqui).
-   */
-  function onQRCodeDetected(decodedText) {
-    if (decodedText === lastDecode) {
-      return; // evita repetição imediata
-    }
-    lastDecode = decodedText;
-
-    console.log('QR detectado:', decodedText);
-
-    // Para tudo antes de ir
+  function onQRCodeDetected(decoded) {
+    if (decoded === lastDecode) return;
+    lastDecode = decoded;
+    logEvent("QR detectado: " + decoded);
     stopCamera();
-
-    // Redirecionar anexando parâmetro (ajuste conforme sua lógica)
-    const target = `${trussDetailUrl}?qr=${encodeURIComponent(decodedText)}`;
+    if (HARD_BLOCK_REDIRECT) {
+      logEvent("Redirecionamento BLOQUEADO (modo debug).");
+      return;
+    }
+    const target = `${trussDetailUrl}?qr=${encodeURIComponent(decoded)}`;
+    logEvent("Redirecionando para " + target);
     window.location.href = target;
   }
 
-  /**
-   * Clique do botão principal.
-   * Em vez de redirecionar direto, inicia a câmera.
-   */
   qrBtn.addEventListener('click', async (e) => {
     e.preventDefault();
-
-    // Se já está ativo, não reinicia; pode decidir parar ou apenas ignorar
-    if (stream) {
-      return;
-    }
-
+    e.stopPropagation();
+    e.stopImmediatePropagation(); // impede outros handlers
+    logEvent("Clique principal do qrBtn recebido.");
     await startCamera();
-
-    // Se quiser já iniciar o loop de leitura:
-    // startScanLoop();
   });
 
-  /**
-   * Limpa câmera ao sair/navegar
-   */
+  // Logar qualquer tentativa geral de redirecionamento
+  const originalAssign = window.location.assign;
+  window.location.assign = function () {
+    console.warn("[SCAN] location.assign chamado:", arguments);
+    if (HARD_BLOCK_REDIRECT) {
+      console.warn("[SCAN] bloqueado (debug).");
+      return;
+    }
+    return originalAssign.apply(this, arguments);
+  };
+  Object.defineProperty(window.location, 'href', {
+    set(v) {
+      console.warn("[SCAN] location.href set ->", v);
+      if (!HARD_BLOCK_REDIRECT) {
+        history.pushState({}, "", v); // simula (para debug). Trocar para real se quiser.
+      } else {
+        console.warn("[SCAN] href bloqueado (debug).");
+      }
+    },
+    get() {
+      return document.URL;
+    }
+  });
+
   window.addEventListener('beforeunload', () => {
+    logEvent("beforeunload -> stopCamera");
     stopCamera();
   });
 
-  // (Opcional) expor para debug no console
+  // Expor p/ teste manual
   window.__qrScanDebug = {
     startCamera,
     stopCamera,
-    startScanLoop
+    forceQR: onQRCodeDetected
   };
+
 })();
