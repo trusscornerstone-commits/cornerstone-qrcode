@@ -1,156 +1,178 @@
 /**
- * scan_truss.js (DEBUG v2)
- * Adiciona logs e proteção contra redirecionamentos acidentais.
- * Data build: 2025-09-22T18:05Z
+ * scan_truss.js (versão robusta)
+ * - Fallback se facingMode environment não existir.
+ * - Sem redirecionamento automático em erro.
+ * - Logs claros e UI de feedback.
+ * - Placeholder para detecção de QR.
  */
 (function () {
-  console.log("[SCAN] Versão DEBUG v2 carregada.");
   const qrBtn = document.getElementById('qrBtn');
   const videoPreview = document.getElementById('videoPreview');
-
-  if (!qrBtn) {
-    console.warn("[SCAN] Botão qrBtn não encontrado.");
-    return;
-  }
-
-  // Impedir que outra função capture o clique e redirecione
-  // (ex: listeners adicionados antes ou delegação global)
-  qrBtn.addEventListener('click', (e) => {
-    console.log("[SCAN] Primeiro listener marcador (capturing) executado.");
-  }, { capture: true });
+  const FEEDBACK_ID = 'cameraFeedback';
 
   let stream = null;
-  let scanning = false;
   let videoEl = null;
-  let scanAnimationId = null;
+  let scanning = false;
   let lastDecode = null;
 
-  const HARD_BLOCK_REDIRECT = true; // enquanto debug
+  function setFeedback(msg, isError=false) {
+    let fb = document.getElementById(FEEDBACK_ID);
+    if (!fb) {
+      fb = document.createElement('div');
+      fb.id = FEEDBACK_ID;
+      fb.style.marginTop = '8px';
+      fb.style.fontSize = '0.9rem';
+      fb.style.fontFamily = 'system-ui, sans-serif';
+      videoPreview.appendChild(fb);
+    }
+    fb.textContent = msg;
+    fb.style.color = isError ? '#d33' : '#ccc';
+  }
 
-  function logEvent(name) {
-    console.log(`[SCAN] ${name}`);
+  async function listDevices() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      console.log("[SCAN] Dispositivos:", devices.map(d => ({
+        kind: d.kind,
+        label: d.label,
+        deviceId: d.deviceId
+      })));
+      if (!devices.some(d => d.kind === 'videoinput')) {
+        setFeedback("Nenhuma câmera foi detectada neste dispositivo.", true);
+      }
+    } catch (e) {
+      console.warn("[SCAN] enumerateDevices falhou:", e);
+    }
+  }
+
+  function cleanupPreview() {
+    videoPreview.innerHTML = '';
+  }
+
+  function buildVideoElement() {
+    cleanupPreview();
+    videoEl = document.createElement('video');
+    videoEl.setAttribute('playsinline', 'true');
+    videoEl.setAttribute('autoplay', 'true');
+    videoEl.setAttribute('muted', 'true');
+    videoEl.muted = true;
+
+    videoEl.style.width = '100%';
+    videoEl.style.maxHeight = '60vh';
+    videoEl.style.objectFit = 'cover';
+    videoEl.style.background = '#000';
+    videoEl.style.border = '1px solid #333';
+    videoEl.style.borderRadius = '8px';
+
+    videoPreview.appendChild(videoEl);
+
+    const stopBtn = document.createElement('button');
+    stopBtn.type = 'button';
+    stopBtn.textContent = 'Cancelar';
+    stopBtn.style.marginTop = '8px';
+    stopBtn.addEventListener('click', stopCamera);
+    videoPreview.appendChild(stopBtn);
   }
 
   async function startCamera() {
-    logEvent("startCamera chamado");
     if (!navigator.mediaDevices?.getUserMedia) {
-      alert("Navegador não suporta câmera.");
+      setFeedback("Navegador não suporta acesso à câmera.", true);
       return;
     }
     if (stream) {
-      logEvent("Stream já existe.");
+      setFeedback("Câmera já ativa.");
       return;
     }
+    buildVideoElement();
+    setFeedback("Solicitando acesso à câmera...");
+
+    // Primeira tentativa: traseira
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
+        video: { facingMode: { ideal: 'environment' } },
         audio: false
       });
-      logEvent("Permissão concedida e stream ativo.");
-      prepareVideoElement();
-      videoEl.srcObject = stream;
-      await videoEl.play();
-      logEvent("Video em reprodução.");
-      scanning = true;
-    } catch (err) {
-      console.error("[SCAN] Erro getUserMedia:", err);
+      console.log("[SCAN] Stream OK (environment).");
+    } catch (err1) {
+      console.warn("[SCAN] Falhou com environment:", err1.name, err1.message);
+      if (err1.name === 'NotFoundError' || err1.name === 'OverconstrainedError') {
+        setFeedback("Tentando fallback de câmera genérica...");
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          console.log("[SCAN] Stream OK (fallback).");
+        } catch (err2) {
+          handleCameraError(err2);
+          return;
+        }
+      } else {
+        handleCameraError(err1);
+        return;
+      }
     }
-  }
 
-  function prepareVideoElement() {
-    videoPreview.innerHTML = "";
-    videoEl = document.createElement("video");
-    videoEl.setAttribute("playsinline", "true");
-    videoEl.setAttribute("autoplay", "true");
-    videoEl.setAttribute("muted", "true");
-    videoEl.muted = true;
-    videoEl.style.width = "100%";
-    videoEl.style.background = "#000";
-    videoEl.style.border = "1px solid #333";
-    videoEl.style.borderRadius = "8px";
-    videoPreview.appendChild(videoEl);
+    videoEl.srcObject = stream;
+    try {
+      await videoEl.play();
+    } catch (playErr) {
+      console.warn("[SCAN] Falha ao iniciar vídeo:", playErr);
+      setFeedback("Falha ao iniciar vídeo.", true);
+      stopCamera();
+      return;
+    }
 
-    const stopBtn = document.createElement("button");
-    stopBtn.textContent = "Parar";
-    stopBtn.type = "button";
-    stopBtn.addEventListener("click", stopCamera);
-    videoPreview.appendChild(stopBtn);
-
-    logEvent("Elemento de vídeo preparado.");
+    scanning = true;
+    setFeedback("Câmera ativa. Aponte para o QR (leitura ainda não implementada).");
+    listDevices();
+    // Aqui você chamaria startScanLoop() depois de adicionar a lib de QR
   }
 
   function stopCamera() {
-    logEvent("stopCamera chamado");
     scanning = false;
-    if (scanAnimationId) {
-      cancelAnimationFrame(scanAnimationId);
-      scanAnimationId = null;
-    }
     if (stream) {
       stream.getTracks().forEach(t => t.stop());
       stream = null;
-      logEvent("Tracks paradas.");
     }
-    videoPreview.innerHTML = "";
-    videoEl = null;
+    cleanupPreview();
   }
 
-  function onQRCodeDetected(decoded) {
-    if (decoded === lastDecode) return;
-    lastDecode = decoded;
-    logEvent("QR detectado: " + decoded);
-    stopCamera();
-    if (HARD_BLOCK_REDIRECT) {
-      logEvent("Redirecionamento BLOQUEADO (modo debug).");
-      return;
+  function handleCameraError(err) {
+    console.error("[SCAN] Erro câmera:", err);
+    let msg;
+    switch (err.name) {
+      case 'NotAllowedError':
+        msg = "Permissão negada. Habilite a câmera nas configurações do navegador.";
+        break;
+      case 'NotFoundError':
+      case 'OverconstrainedError':
+        msg = "Nenhuma câmera disponível ou compatível foi encontrada.";
+        break;
+      case 'NotReadableError':
+        msg = "A câmera está em uso por outro aplicativo.";
+        break;
+      default:
+        msg = `Erro ao acessar câmera (${err.name}).`;
     }
-    const target = `${trussDetailUrl}?qr=${encodeURIComponent(decoded)}`;
-    logEvent("Redirecionando para " + target);
+    setFeedback(msg, true);
+  }
+
+  function onQRCodeDetected(decodedText) {
+    if (decodedText === lastDecode) return;
+    lastDecode = decodedText;
+    console.log("[SCAN] QR detectado:", decodedText);
+    stopCamera();
+    // Redireciono só quando estiver OK:
+    const target = `${trussDetailUrl}?qr=${encodeURIComponent(decodedText)}`;
     window.location.href = target;
   }
 
-  qrBtn.addEventListener('click', async (e) => {
+  qrBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    e.stopImmediatePropagation(); // impede outros handlers
-    logEvent("Clique principal do qrBtn recebido.");
-    await startCamera();
+    startCamera();
   });
 
-  // Logar qualquer tentativa geral de redirecionamento
-  const originalAssign = window.location.assign;
-  window.location.assign = function () {
-    console.warn("[SCAN] location.assign chamado:", arguments);
-    if (HARD_BLOCK_REDIRECT) {
-      console.warn("[SCAN] bloqueado (debug).");
-      return;
-    }
-    return originalAssign.apply(this, arguments);
-  };
-  Object.defineProperty(window.location, 'href', {
-    set(v) {
-      console.warn("[SCAN] location.href set ->", v);
-      if (!HARD_BLOCK_REDIRECT) {
-        history.pushState({}, "", v); // simula (para debug). Trocar para real se quiser.
-      } else {
-        console.warn("[SCAN] href bloqueado (debug).");
-      }
-    },
-    get() {
-      return document.URL;
-    }
-  });
+  window.addEventListener('beforeunload', stopCamera);
 
-  window.addEventListener('beforeunload', () => {
-    logEvent("beforeunload -> stopCamera");
-    stopCamera();
-  });
-
-  // Expor p/ teste manual
-  window.__qrScanDebug = {
-    startCamera,
-    stopCamera,
-    forceQR: onQRCodeDetected
-  };
-
+  // Expor para debug manual no console:
+  window.__qrScan = { startCamera, stopCamera, onQRCodeDetected };
 })();
