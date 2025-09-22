@@ -23,9 +23,20 @@ def env_list(name, default=None, sep=","):
 # ==== Configurações básicas ====
 #SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-" + get_random_secret_key())
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "change-me-in-prod")
-DJANGO_ALLOWED_HOSTS = 'https://cornerstone-app.onrender.com'
-CSRF_TRUSTED_ORIGINS = ['https://cornerstone-app.onrender.com']
+# Antes de tudo:
+def env_bool(name, default=False):
+    return os.environ.get(name, str(int(default))).lower() in ("1", "true", "yes", "on")
 
+def env_list(name, default=None, sep=","):
+    raw = os.environ.get(name)
+    if not raw:
+        return default or []
+    return [v.strip() for v in raw.split(sep) if v.strip()]
+
+DEBUG = env_bool("DJANGO_DEBUG", False)
+
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", ["cornerstone-app.onrender.com"])
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", ["https://cornerstone-app.onrender.com"])
 DEBUG = env_bool("DJANGO_DEBUG", False)
 
 ALLOWED_HOSTS = [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS","").split(",") if h]
@@ -102,6 +113,10 @@ USE_TZ = True
 
 # ==== Arquivos Estáticos ====
 STATIC_URL = "/static/"
+# Se você tem uma pasta global "static" no root:
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # (opcional – remova se não existe)
+]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 if DEBUG:
