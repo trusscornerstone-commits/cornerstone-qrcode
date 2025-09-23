@@ -1,18 +1,17 @@
-"""
-Django settings for cornerstone project.
-"""
-
 from pathlib import Path
 import os
 import dj_database_url
-from django.core.management.utils import get_random_secret_key
 
-# Caminho base
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ==== Variáveis de ambiente utilitárias ====
+# --------------------------
+# Helpers de ambiente
+# --------------------------
 def env_bool(name, default=False):
-    return os.environ.get(name, str(int(default))) in ("1", "true", "True", "yes", "on")
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
 
 def env_list(name, default=None, sep=","):
     raw = os.environ.get(name)
@@ -20,31 +19,29 @@ def env_list(name, default=None, sep=","):
         return default or []
     return [v.strip() for v in raw.split(sep) if v.strip()]
 
-# ==== Configurações básicas ====
-#SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-" + get_random_secret_key())
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "change-me-in-prod")
-# Antes de tudo:
-def env_bool(name, default=False):
-    return os.environ.get(name, str(int(default))).lower() in ("1", "true", "yes", "on")
-
-def env_list(name, default=None, sep=","):
-    raw = os.environ.get(name)
-    if not raw:
-        return default or []
-    return [v.strip() for v in raw.split(sep) if v.strip()]
-
+# --------------------------
+# Segurança básica
+# --------------------------
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-change-me")
 DEBUG = env_bool("DJANGO_DEBUG", False)
 
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", ["cornerstone-app.onrender.com"])
-CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", ["https://cornerstone-app.onrender.com"])
-DEBUG = env_bool("DJANGO_DEBUG", False)
+# ALLOWED_HOSTS: se vazio e DEBUG=True, permite localhost; se produção e vazio -> problema
+_raw_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
+if _raw_hosts.strip():
+    ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(",") if h.strip()]
+else:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else []
 
-ALLOWED_HOSTS = [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS","").split(",") if h]
+# CSRF_TRUSTED_ORIGINS deve ter formato sem barra final
+_raw_csrf = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+if _raw_csrf.strip():
+    CSRF_TRUSTED_ORIGINS = [o.rstrip("/") for o in _raw_csrf.split(",") if o.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = []
 
-_raw_csrf = os.environ.get("CSRF_TRUSTED_ORIGINS","")
-CSRF_TRUSTED_ORIGINS = [o for o in _raw_csrf.split(",") if o]
-
-# ==== Aplicativos ====
+# --------------------------
+# Apps
+# --------------------------
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -55,10 +52,12 @@ INSTALLED_APPS = [
     "apps.django_apps.accounts",
 ]
 
-# ==== Middleware ====
+# --------------------------
+# Middleware
+# --------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # mantém mesmo em dev; ok
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -68,10 +67,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "cornerstone.urls"
-WSGI_APPLICATION = "cornerstone.wsgi.application"  # Mantido para manage.py
-ASGI_APPLICATION = "cornerstone.asgi.application"  # Referência se precisar (Channels, etc.)
+WSGI_APPLICATION = "cornerstone.wsgi.application"
+ASGI_APPLICATION = "cornerstone.asgi.application"
 
-# ==== Templates ====
+# --------------------------
+# Templates
+# --------------------------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -88,14 +89,28 @@ TEMPLATES = [
     },
 ]
 
-
-# ==== Banco de Dados ====
+# --------------------------
+# Banco de Dados
+# --------------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
-DATABASES = {
-    "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
-}
 
-# ==== Validação de Senhas ====
+if DATABASE_URL:
+    # Postgres (ou outro) configurado por URL
+    DATABASES = {
+        "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+    }
+else:
+    # Fallback para build / dev sem Postgres
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "build.sqlite3",
+        }
+    }
+
+# --------------------------
+# Senhas
+# --------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -103,19 +118,20 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# ==== Internacionalização / Fuso ====
+# --------------------------
+# Locale / Time
+# --------------------------
 LANGUAGE_CODE = "en-us"
-# Ajustar se quiser horário BR:
-# TIME_ZONE = "America/Sao_Paulo"
-TIME_ZONE = "UTC"
+TIME_ZONE = "UTC"  # ou "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
-# ==== Arquivos Estáticos ====
+# --------------------------
+# Estáticos
+# --------------------------
 STATIC_URL = "/static/"
-# Se você tem uma pasta global "static" no root:
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # (opcional – remova se não existe)
+    BASE_DIR / "static",
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -124,18 +140,17 @@ if DEBUG:
 else:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# ==== Arquivos de mídia (caso venha a usar) ====
+# --------------------------
+# Media (futuro)
+# --------------------------
 # MEDIA_URL = "/media/"
 # MEDIA_ROOT = BASE_DIR / "media"
 
-# ==== Segurança / Proxy ====
-CSRF_TRUSTED_ORIGINS = env_list(
-    "CSRF_TRUSTED_ORIGINS",
-    ["https://cornerstone-app.onrender.com"]
-)
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-
+# --------------------------
+# Segurança extra (prod)
+# --------------------------
 if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = True
@@ -143,20 +158,27 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    #X_FRAME_OPTIONS = "DENY"
     SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
-# ==== Backends de Autenticação ====
+# --------------------------
+# Auth
+# --------------------------
 AUTHENTICATION_BACKENDS = [
     "apps.django_apps.accounts.backends.EmailOrUsernameBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-# ==== Login / Redirects ====
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"
 
-# ==== ID padrão ====
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# --------------------------
+# Log rápido do engine (apenas se quiser)
+# --------------------------
+if env_bool("PRINT_DB_ENGINE", False):
+    try:
+        print("DB_ENGINE_AT_RUNTIME:", DATABASES["default"]["ENGINE"])
+    except Exception:
+        pass

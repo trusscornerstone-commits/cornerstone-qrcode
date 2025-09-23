@@ -1,0 +1,13 @@
+services:
+  django:
+    environment:
+      DJANGO_DEBUG: "1"
+      RUN_MIGRATIONS: "1"
+    volumes:
+      - .:/app
+      - staticfiles:/app/staticfiles
+    command: ["./docker/entrypoints/django-entrypoint.sh"]
+
+  fastapi:
+    volumes:
+      - .:/app

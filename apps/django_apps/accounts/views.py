@@ -1,19 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.http import JsonResponse, HttpResponse
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth import get_user_model
-from django.http import JsonResponse
+
+from .models import Truss
 
 User = get_user_model()
 
-@staff_member_required
-def list_users(request):
-    users = list(User.objects.values('username', 'email'))
-    return JsonResponse({'users': users})
 
 def login_page(request):
     if request.method == "POST":
@@ -23,28 +19,52 @@ def login_page(request):
         user = authenticate(request, username=identifier, password=password)
         if user is not None:
             login(request, user)
-            next_url = request.GET.get('next')
+            next_url = request.GET.get("next")
             if next_url and url_has_allowed_host_and_scheme(next_url, {request.get_host()}):
                 return redirect(next_url)
             return redirect("home")
         messages.error(request, "Email/Usuário ou senha inválidos")
     return render(request, "accounts/login_page.html")
 
+
 @login_required
 def home(request):
     return render(request, "accounts/home.html")
 
-@login_required
-def truss_detail(request):
-    return render(request, "accounts/truss-detail.html")
 
 @login_required
-def em_construcao(request):
-    return render(request, 'accounts/em_construcao.html')
+def truss_detail_view(request, pk: int):
+    truss = get_object_or_404(Truss, pk=pk)
+    return render(request, "accounts/truss_detail.html", {"truss": truss})
+
+
+@login_required
+def scan_truss_view(request):
+    return render(request, "accounts/scan_truss.html")
+
+
+@login_required
+def em_construcao_view(request):
+    return render(request, "accounts/em_construcao.html")
+
+
+@staff_member_required
+def list_users(request):
+    users = list(User.objects.values("username", "email"))
+    return JsonResponse({"users": users})
+
 
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    return redirect("login")
+
 
 def health(request):
     return JsonResponse({"status": "ok"})
+
+from django.shortcuts import redirect
+
+def root_redirect(request):
+    if request.user.is_authenticated:
+        return redirect("home")
+    return redirect("login")
