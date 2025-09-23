@@ -58,20 +58,29 @@
   </div>
 
   <script>
-    window.APP_CONFIG = {
-      urls: {
-        trussDetail: "{% url 'truss_detail' pk=0 %}".replace(/0\/?$/, ""),
-        scanTruss: "{% url 'scan_truss' %}",
-        emConstrucao: "{% url 'em_construcao' %}"
-      }
-    };
-  </script>
-  <script>
-    const { scanTruss, emConstrucao } = window.APP_CONFIG.urls;
-    document.getElementById('qrBtn').addEventListener('click', () => { window.location.href = scanTruss; });
-    document.getElementById('estoqueBtn').addEventListener('click', () => { window.location.href = emConstrucao; });
-    document.getElementById('historyBtn').addEventListener('click', () => { window.location.href = emConstrucao; });
-    document.getElementById('reportBtn').addEventListener('click', () => { window.location.href = emConstrucao; });
-  </script>
+  window.APP_CONFIG = {
+    urls: {
+      trussDetailBase: "/truss-detail/",
+      scanTruss: "{% url 'scan_truss' %}",
+      emConstrucao: "{% url 'em_construcao' %}"
+    },
+    trussDetailUrl(pk) { return this.urls.trussDetailBase + pk + "/"; }
+  };
+
+  const { scanTruss, emConstrucao } = window.APP_CONFIG.urls;
+
+  document.getElementById('qrBtn').addEventListener('click', () => {
+    window.location.href = scanTruss;
+  });
+  document.getElementById('estoqueBtn').addEventListener('click', () => {
+    window.location.href = emConstrucao;
+  });
+  document.getElementById('historyBtn').addEventListener('click', () => {
+    window.location.href = emConstrucao;
+  });
+  document.getElementById('reportBtn').addEventListener('click', () => {
+    window.location.href = emConstrucao;
+  });
+</script>
 </body>
 </html>

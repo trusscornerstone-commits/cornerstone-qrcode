@@ -1,15 +1,14 @@
-from django.urls import path, include
+from django.urls import path
 from . import views
-from .views import list_users
 
 urlpatterns = [
-    path('', views.login_page, name='login'),
-    path('home/', views.home, name='home'),
-    path('scan/', views.scan_truss, name='scan_truss'),
-    path('truss-detail/', views.truss_detail, name='truss_detail'),
-    path('em-construcao/', views.em_construcao, name='em_construcao'),
-    path('logout/', views.logout_view, name='logout'),
-    path('health/', views.health, name='health'),
-    path('list-users/', list_users, name='list_users'),
-
+    path("", views.root_redirect, name="root"),
+    path("login/", views.login_page, name="login"),
+    path("logout/", views.logout_view, name="logout"),
+    path("home/", views.home, name="home"),
+    path("truss-detail/<int:pk>/", views.truss_detail_view, name="truss_detail"),
+    path("scan-truss/", views.scan_truss_view, name="scan_truss"),
+    path("em-construcao/", views.em_construcao_view, name="em_construcao"),
+    path("users/", views.list_users, name="list_users"),
+    path("health/", views.health, name="health"),
 ]
