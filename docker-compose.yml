@@ -1,46 +1,86 @@
-version: "3.9"
-
 services:
-  db:
+  django:
+    env_file: .env
+    build:
+      context: .
+      dockerfile: docker/django.Dockerfile
+    volumes:
+      - .:/app
+      - staticfiles:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health/ || exit 1"]
+      interval: 15s
+      retries: 3
+      start_period: 10s
+      timeout: 5s
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: cornerstone
+      DB_PASSWORD: cornerstone
+      DATABASE_URL: postgres://cornerstone:cornerstone@db:5432/cornerstone
+      DJANGO_DEBUG: "1"
+      RUN_MIGRATIONS: "1"
+      RUN_COLLECTSTATIC: "0"   # não roda em dev
+    command: ["./docker/entrypoints/django-entrypoint.sh"]
+    networks:
+      - backend
+
+  db:   
     image: postgres:15
     environment:
       POSTGRES_USER: cornerstone
       POSTGRES_PASSWORD: cornerstone
       POSTGRES_DB: cornerstone
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cornerstone -d cornerstone"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cornerstone -d cornerstone"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
 
-  django:
+  fastapi:
     build:
       context: .
-      dockerfile: docker/django.Dockerfile
-    environment:
-      DATABASE_URL: postgres://cornerstone:cornerstone@db:5432/cornerstone
-      DJANGO_DEBUG: "0"
-      RUN_MIGRATIONS: "1"
-      CREATE_SUPERUSER: "0"
-    depends_on:
-      db:
-        condition: service_healthy
+      dockerfile: docker/fastapi.Dockerfile
+    command: sh docker/entrypoints/fastapi-entrypoint.sh
+    volumes:
+      - .:/app
     ports:
-      - "8000:8000"
+      - "8001:8001"
+    depends_on:
+      - db
+    networks:
+      - backend
 
   nginx:
     image: nginx:latest
-    depends_on:
-      - django
+    container_name: nginx-1
     volumes:
       - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
-      # NÃO montar staticfiles como volume vazio; servir via proxy_pass ou copiar no build
-      - staticfiles:/app/staticfiles:ro
+      - staticfiles:/app/staticfiles
     ports:
       - "80:80"
+    depends_on:
+      - django
+      - fastapi
+    networks:
+      - backend
+    restart: always
 
 volumes:
   postgres_data:
   staticfiles:
+
+networks:
+  backend:
+    driver: bridge
