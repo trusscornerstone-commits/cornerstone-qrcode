@@ -26,7 +26,7 @@ services:
       DJANGO_DEBUG: "1"
       RUN_MIGRATIONS: "1"
       RUN_COLLECTSTATIC: "0"   # não roda em dev
-    command: ["./docker/entrypoints/django-entrypoint.sh"]
+    command: ["sh", "./docker/entrypoints/django-entrypoint.sh"]
     networks:
       - backend
 
