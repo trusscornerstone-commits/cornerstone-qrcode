@@ -64,8 +64,14 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'apps.django_apps.accounts.middleware.LoginRequiredMiddleware',
 ]
+
+if os.getenv("ENABLE_LOGIN_REQUIRED_MW", "0") == "1":
+    MIDDLEWARE.append("apps.django_apps.accounts.middleware.LoginRequiredMiddleware")
+
+# URLs padrão
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/home/"
 
 ROOT_URLCONF = "cornerstone.urls"
 WSGI_APPLICATION = "cornerstone.wsgi.application"
@@ -174,6 +180,18 @@ LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Sessão
+SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "sessionid")  # ex.: "sessionid_v2"
+# Duração da sessão (em segundos). Padrão do Django é 1209600 (2 semanas).
+SESSION_COOKIE_AGE = int(os.getenv("SESSION_COOKIE_AGE", 1209600))
+# Se True, expira ao fechar o navegador (ignora AGE)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = os.getenv("SESSION_EXPIRE_AT_BROWSER_CLOSE", "0") == "1"
+
+# Recomendações para produção:
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "1") == "1"   # só envia por HTTPS
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "1") == "1"
+SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")    # "Lax" ou "Strict"
 
 # --------------------------
 # Log rápido do engine (apenas se quiser)

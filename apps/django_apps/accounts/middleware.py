@@ -6,6 +6,7 @@ EXEMPT_NAMES = {
     "login",
     "logout",
     "health",
+    # adicione nomes liberados se necessário (ex.: "admin:login")
 }
 
 EXEMPT_PATH_PREFIXES = (
@@ -18,25 +19,20 @@ class LoginRequiredMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Se já autenticado, segue
         if request.user.is_authenticated:
             return self.get_response(request)
 
         path = request.path
 
-        # Prefixos liberados
         for p in EXEMPT_PATH_PREFIXES:
             if path.startswith(p):
                 return self.get_response(request)
 
-        # Nomes de rota liberados
         try:
             match = resolve(path)
             if match.view_name in EXEMPT_NAMES:
                 return self.get_response(request)
         except Exception:
-            # Se não resolver rota (404, etc.), segue fluxo
             pass
 
-        # Redireciona para login com next
         return redirect_to_login(next=path, login_url=getattr(settings, "LOGIN_URL", "/login/"))
