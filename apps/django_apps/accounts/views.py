@@ -37,6 +37,10 @@ def truss_detail_view(request, pk: int):
     truss = get_object_or_404(Truss, pk=pk)
     return render(request, "accounts/truss_detail.html", {"truss": truss})
 
+def truss_detail(request, truss_id: int):
+    # Encaminha para a implementação existente esperando 'pk'
+    return truss_detail_view(request, pk=truss_id)
+
 
 @login_required
 def scan_truss_view(request):

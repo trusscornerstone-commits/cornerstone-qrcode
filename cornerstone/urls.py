@@ -21,4 +21,5 @@ from django.shortcuts import redirect
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('apps.django_apps.accounts.urls')),
+    path("", include("apps.qrcode_app.urls")),  # rotas da qrcode_app (inclui /truss/<id>/)
 ]

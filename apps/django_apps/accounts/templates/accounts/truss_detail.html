@@ -1,40 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Truss Detail</title>
-  <!-- <link rel="stylesheet" href="truss-detail.css"> -->
-    {% load static %}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Truss {{ truss.truss_number }}</title>
+  {% load static %}
   <link rel="stylesheet" href="{% static 'accounts/truss-detail.css' %}">
 </head>
 <body>
   <div class="container">
-    <div class="title">T1</div>
+    <div class="title">{{ truss.truss_number }}</div>
 
-    <img src="truss.jpg" alt="Truss" class="image">
+    <img src="{% static 'accounts/truss.jpg' %}" alt="Truss" class="image">
 
-    <button id="statusBtn" class="status-btn ongoing">Truss Ongoing</button>
+    <button id="statusBtn" class="status-btn {% if truss.status|lower in:'instalado,completed' %}completed{% else %}ongoing{% endif %}">
+      {{ truss.status|default:"Truss Ongoing" }}
+    </button>
 
     <h3>Description</h3>
     <p class="description">
-      This is an example of how the scan will open a section of your app.
-      Where you can set up all the information about your product and trigger more actions.
-      Here we are using a modal page for example.
+      Details for truss {{ truss.truss_number }} (ID: {{ truss.id }}). Job: {{ truss.job_number }}.
+      Type: {{ truss.tipo }}. Qty: {{ truss.quantidade }}.
     </p>
 
     <div class="details">
-      <div><strong>Job</strong>250002</div>
-      <div><strong>Truss Type</strong>Flat</div>
-      <div><strong>Qty</strong>10</div>
-      <div><strong>Address</strong>27 Guild Street</div>
-      <div><strong>Length</strong>22-2-8</div>
+      <div><strong>Job</strong> {{ truss.job_number }}</div>
+      <div><strong>Truss Type</strong> {{ truss.tipo }}</div>
+      <div><strong>Qty</strong> {{ truss.quantidade }}</div>
+      <div><strong>Address</strong> {{ truss.endereco }}</div>
+      <div><strong>Length</strong> {{ truss.tamanho }}</div>
     </div>
   </div>
 
   <script>
     const statusBtn = document.getElementById("statusBtn");
-
     statusBtn.addEventListener("click", () => {
       if (statusBtn.classList.contains("ongoing")) {
         statusBtn.classList.remove("ongoing");

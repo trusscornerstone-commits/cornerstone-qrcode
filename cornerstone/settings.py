@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "apps.django_apps.accounts",
+    "apps.qrcode_app",
 ]
 
 # --------------------------
@@ -136,6 +137,22 @@ USE_TZ = True
 # --------------------------
 # Estáticos
 # --------------------------
+# Opcional (mas comum em projetos)
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],  # se você usa uma pasta global "templates/"
+        "APP_DIRS": True,                  # habilita templates dentro de cada app
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [
     BASE_DIR / "static",

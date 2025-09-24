@@ -31,6 +31,38 @@ services:
     networks:
       - backend
 
+  truss_seed:
+    # One-shot: migra e importa CSV -> encerra
+    env_file: .env
+    build:
+      context: .
+      dockerfile: docker/django.Dockerfile
+    command: >
+      sh -lc '
+        echo "[truss_seed] Aplicando migrations..." &&
+        python manage.py migrate --noinput &&
+        echo "[truss_seed] Importando trusses do CSV..." &&
+        python manage.py import_trusses --csv qrcode_app/trusses.csv &&
+        echo "[truss_seed] OK"
+      '
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: cornerstone
+      DB_PASSWORD: cornerstone
+      DATABASE_URL: postgres://cornerstone:cornerstone@db:5432/cornerstone
+      DJANGO_DEBUG: "0"
+      RUN_MIGRATIONS: "0"
+      RUN_COLLECTSTATIC: "0"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    restart: "no"
+    networks:
+      - backend
+
   db:   
     image: postgres:15
     environment:
@@ -42,10 +74,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cornerstone -d cornerstone"]
-      interval: 3s
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      start_period: 30s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 15
     networks:
       - backend
 

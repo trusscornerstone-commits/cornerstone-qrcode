@@ -6,6 +6,7 @@ EXEMPT_NAMES = {
     "login",
     "logout",
     "health",
+    "truss_detail",
     # adicione nomes liberados se necessário (ex.: "admin:login")
 }
 
