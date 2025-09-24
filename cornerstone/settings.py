@@ -23,7 +23,7 @@ def env_list(name, default=None, sep=","):
 # Segurança básica
 # --------------------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-change-me")
-DEBUG = env_bool("DJANGO_DEBUG", False)
+DEBUG = env_bool("DJANGO_DEBUG", True)
 
 # ALLOWED_HOSTS: se vazio e DEBUG=True, permite localhost; se produção e vazio -> problema
 _raw_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
