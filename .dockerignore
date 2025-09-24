@@ -1,12 +1,12 @@
 .git
 .gitignore
 .env
-.env.*
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-*.sqlite3
-/media
-/staticfiles   # (SEMPRE ignore a pasta gerada; ela é feita no build)
-node_modules
+**/__pycache__/
+**/*.pyc
+.venv/
+venv/
+dist/
+build/
+staticfiles/
+docker/nginx.conf
+db.sqlite3
