@@ -10,17 +10,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Dependências para compilar (não vão para a imagem final)
+# Só o que é necessário para compilar dependências Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential libpq-dev curl postgresql-client && \
-    rm -rf /var/lib/apt/lists/*
+    build-essential libpq-dev curl \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip install --upgrade pip \
+ && pip install --no-cache-dir --prefix=/install -r requirements.txt
 
+# Copia o código para coletar estáticos
 COPY . .
 
-# Collectstatic (usa fallback SQLite se não houver DATABASE_URL)
+# Collectstatic não precisa de DB; com DJANGO_SETTINGS_MODULE já definido
 RUN python manage.py collectstatic --noinput
 
 # ---------- STAGE 2: runtime ----------
@@ -33,20 +35,26 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Só libs necessárias em runtime (libpq para psycopg2)
-RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Bibliotecas de runtime:
+# - libpq5: lib runtime do PostgreSQL (em vez de libpq-dev)
+# - postgresql-client: para pg_isready no entrypoint
+# - curl: para healthcheck do docker-compose
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 postgresql-client curl \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copia libs Python instaladas no build
+# Copia libs Python instaladas no build para o local padrão
 COPY --from=build /install /usr/local
 
-# Copia código fonte (se quiser só fontes limpos, poderia excluir testes, etc.)
+# Copia fontes
 COPY . .
 
-# Copia staticfiles gerados
+# Copia staticfiles gerados no build
 COPY --from=build /app/staticfiles /app/staticfiles
 
-RUN chmod +x docker/entrypoints/django-entrypoint.sh && sed -i 's/\r$//' docker/entrypoints/django-entrypoint.sh
+# Normaliza e garante executável (ENTRYPOINT usa sh, mas mantém por segurança)
+RUN sed -i 's/\r$//' docker/entrypoints/django-entrypoint.sh \
+ && chmod +x docker/entrypoints/django-entrypoint.sh
 
 EXPOSE 8000
-ENTRYPOINT ["/app/docker/entrypoints/django-entrypoint.sh"]
+ENTRYPOINT ["sh", "/app/docker/entrypoints/django-entrypoint.sh"]
