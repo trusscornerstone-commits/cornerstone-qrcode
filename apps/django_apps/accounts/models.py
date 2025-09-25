@@ -1,26 +1,25 @@
 from django.db import models
 
 class Truss(models.Model):
-    # Preserva o ID do CSV/QR como chave primária para bater com /truss/<id>
-    id = models.IntegerField(primary_key=True)
-
-    job_number = models.CharField(max_length=100, blank=True, default="")
-    truss_number = models.CharField(max_length=100, blank=True, default="")
-    tipo = models.CharField(max_length=100, blank=True, default="")
+    id = models.IntegerField(primary_key=True)  # preserva ID do CSV
+    job_number = models.CharField(max_length=50, blank=True, default="")
+    truss_number = models.CharField(max_length=50, blank=True, default="")
+    tipo = models.CharField(max_length=50, blank=True, default="")
     quantidade = models.IntegerField(null=True, blank=True)
-    ply = models.IntegerField(null=True, blank=True)
+    # Seu CSV tem decimais (ex.: 1.2); use DecimalField ou FloatField
+    ply = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
     endereco = models.CharField(max_length=255, blank=True, default="")
-    tamanho = models.CharField(max_length=100, blank=True, default="")
-    status = models.CharField(max_length=100, blank=True, default="")
+    tamanho = models.CharField(max_length=50, blank=True, default="")
+    status = models.CharField(max_length=50, blank=True, default="")
 
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        indexes = [
-            models.Index(fields=["job_number"]),
-            models.Index(fields=["truss_number"]),
-        ]
+        verbose_name = "Truss"
+        verbose_name_plural = "Trusses"
+        ordering = ("-updated_at", "-id")
 
     def __str__(self):
-        return f"{self.truss_number or self.id} ({self.job_number})"
+        return f"{self.truss_number} ({self.job_number})"
