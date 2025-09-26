@@ -1,11 +1,11 @@
 {
   "id": 6,
-  "job_number": "JOB166",
+  "job_number": "",
   "truss_number": "T006",
-  "tipo": "Gable",
+  "tipo": "",
   "quantidade": 2,
   "ply": "2.0",
   "endereco": "Av. Central, 789",
-  "tamanho": "12m",
-  "status": "Instalado"
+  "tamanho": "8",
+  "status": "Ongoing"
 }
