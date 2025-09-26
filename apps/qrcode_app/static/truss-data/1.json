@@ -1,0 +1,11 @@
+{
+  "id": 1,
+  "job_number": "JOB626",
+  "truss_number": "T001",
+  "tipo": "Gable",
+  "quantidade": 9,
+  "ply": "3.0",
+  "endereco": "Av. Central, 789",
+  "tamanho": "12m",
+  "status": "Instalado"
+}
