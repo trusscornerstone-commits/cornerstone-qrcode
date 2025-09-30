@@ -1,2 +1,9 @@
 .env
 staticfiles/
+# Arquivos gerados de etiquetas / QR Codes
+apps/qrcode_app/templates/qrcodes/
+# (Opcional se quiser ignorar qualquer qrcodes em templates)
+**/templates/qrcodes/
+# Ignorar PNG/PDF gerados em qualquer lugar (opcional):
+# *.png
+*.pdf

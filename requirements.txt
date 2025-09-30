@@ -4,9 +4,9 @@ gunicorn==21.2.0
 # Django e utilitários de banco
 django==4.2.11
 dj-database-url==2.1.0
-psycopg2-binary==2.9.9  # Driver PostgreSQL para produção
+# psycopg2-binary==2.9.9  # Driver PostgreSQL antigo (3.13 complica no Windows)
+psycopg[binary]==3.2.2    # Driver PostgreSQL moderno, compatível com Python 3.13
 whitenoise==6.6.0
-
 
 # Manipulação de planilhas
 openpyxl
@@ -22,4 +22,4 @@ fastapi==0.110.0
 sqlalchemy
 python-multipart==0.0.9
 pydantic==1.10.15
-python-dotenv==1.0.1
+python-dotenv>=1.0.1

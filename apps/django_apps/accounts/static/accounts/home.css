@@ -1,0 +1,101 @@
+body {
+  font-family: Arial, sans-serif;
+  background:#fff;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-height:100vh;
+}
+
+.logo { text-align:center; margin-top:50px; }
+.logo img { max-width:400px; height:auto; }
+
+.home-container {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-top:30px;
+  padding:0 15px;
+  width:100%;
+}
+
+.home-container h2 {
+  font-size:22px;
+  margin-bottom:25px;
+  font-weight:600;
+  color:#2c2c2c;
+  letter-spacing:.5px;
+}
+
+.menu-btn {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: 24px 1fr;
+  align-items: center;
+  column-gap: 12px;
+  padding: 14px 22px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  background: #212121;
+  color: #fff;
+  cursor: pointer;
+  transition: background .25s, transform .15s;
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 320px;
+  line-height: 1.15;
+}
+
+.menu-btn:hover { background:#2f2f2f; }
+.menu-btn:active { transform: translateY(1px); }
+
+.menu-btn__icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center; /* centra verticalmente o SVG */
+  justify-content: center;
+  /* Opcional: fundo para debug
+     background: rgba(255,0,0,.1); */
+}
+
+.menu-btn__icon svg {
+  width:20px;
+  height:20px;
+  display:block;
+  fill:#fff;
+}
+
+.menu-btn__icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: currentColor; /* herda branco do botão */
+}
+
+.menu-btn span { display:inline-block; }
+
+.footer {
+  background:#f98d45;
+  width:100vw;
+  height:85px;
+  position:fixed;
+  bottom:0;
+  left:0;
+  z-index:10;
+}
+
+@media (max-width:768px) {
+  .logo img { max-width:150px; }
+  .menu-btn { font-size:15px; padding:12px 18px; }
+  .footer { height:65px; }
+}
+
+@media (max-width:480px) {
+  .logo img { max-width:120px; }
+  .menu-btn { font-size:14px; padding:10px 16px; }
+  .footer { height:55px; }
+}
