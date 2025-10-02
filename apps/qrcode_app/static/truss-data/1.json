@@ -1,11 +1,9 @@
 {
   "id": 1,
-  "job_number": "",
-  "truss_number": "T001",
-  "tipo": "",
-  "quantidade": 9,
-  "ply": "3.0",
-  "endereco": "Av. Central, 789",
-  "tamanho": "12",
-  "status": "Completed"
+  "detected_id": "T001",
+  "original_data": "https://exemplo.com/qr/T001",
+  "file": "T001.png",
+  "engine": "opencv-multi",
+  "page": 1,
+  "occurrence_for_data": 1
 }

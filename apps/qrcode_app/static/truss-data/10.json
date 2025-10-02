@@ -1,11 +1,9 @@
 {
   "id": 10,
-  "job_number": "",
-  "truss_number": "T010",
-  "tipo": "",
-  "quantidade": 1,
-  "ply": "1.0",
-  "endereco": "Rua das Flores, 321",
-  "tamanho": "16",
-  "status": "Completed"
+  "detected_id": "T010",
+  "original_data": "https://exemplo.com/qr/T010",
+  "file": "T010.png",
+  "engine": "opencv-multi",
+  "page": 10,
+  "occurrence_for_data": 1
 }

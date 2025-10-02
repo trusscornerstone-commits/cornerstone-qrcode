@@ -1,11 +1,9 @@
 {
   "id": 5,
-  "job_number": "",
-  "truss_number": "T005",
-  "tipo": "",
-  "quantidade": 5,
-  "ply": "2.0",
-  "endereco": "Rua das Flores, 321",
-  "tamanho": "8",
-  "status": "Ongoing"
+  "detected_id": "T005",
+  "original_data": "https://exemplo.com/qr/T005",
+  "file": "T005.png",
+  "engine": "opencv-multi",
+  "page": 5,
+  "occurrence_for_data": 1
 }
