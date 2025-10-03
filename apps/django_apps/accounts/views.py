@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.http import JsonResponse, HttpResponse
-
+import re
 from .models import Truss
 
 User = get_user_model()
@@ -72,3 +72,27 @@ def root_redirect(request):
     if request.user.is_authenticated:
         return redirect("home")
     return redirect("login")
+
+# Regex opcional para futuro (ex.: T###)
+TRUSS_CODE_RE = re.compile(r'^T(\d{3,})$')
+
+def truss_generic_view(request):
+    """
+    MVP: exibe o conteúdo bruto lido do QR em /truss/generic/?qr=...
+    Futuro:
+      - Se bater padrão interno (ex.: T123) -> redirect('truss_detail', pk=123)
+      - Se for URL externa -> botão 'Abrir'
+    """
+    qr_raw = (request.GET.get("qr") or "").strip()
+
+    # Exemplo futuro (deixe comentado por enquanto):
+    # m = TRUSS_CODE_RE.match(qr_raw)
+    # if m:
+    #     pk = int(m.group(1))
+    #     return redirect('truss_detail', pk=pk)
+
+    context = {
+        "qr_raw": qr_raw,
+        "is_url": qr_raw.startswith("http://") or qr_raw.startswith("https://"),
+    }
+    return render(request, "accounts/truss_generic.html", context)
