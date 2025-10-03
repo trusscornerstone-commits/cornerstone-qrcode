@@ -7,47 +7,188 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style>
     :root { color-scheme: dark; }
-    body,html {
+    * { box-sizing:border-box; }
+    html, body {
       margin:0; padding:0; height:100%;
-      background:#000; font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+      background:#000;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+      overflow:hidden;
+      -webkit-text-size-adjust:100%;
+    }
+
+    .scanner-wrapper {
+      position:relative;
+      width:100%;
+      height:100dvh;
+      display:flex;
+      flex-direction:column;
+      background:#000;
+    }
+
+    #videoContainer {
+      position:relative;
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#000;
       overflow:hidden;
     }
-    .scanner-wrapper { position:relative; width:100%; height:100dvh; display:flex; flex-direction:column; }
-    #videoContainer { position:relative; flex:1; display:flex; align-items:center; justify-content:center; background:#000; overflow:hidden; }
-    #videoContainer video { width:100%; height:100%; object-fit:cover; background:#000; }
+
+    #videoContainer video {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      background:#000;
+      display:block;
+    }
+
+    /* BARRA SUPERIOR */
     .top-bar {
-      position:fixed; top:0; left:0; width:100%; display:flex; align-items:center;
-      justify-content:space-between; padding:12px 16px;
-      background:linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0));
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+      /* Safe area + padding interno */
+      padding:
+        calc(env(safe-area-inset-top, 0px) + 8px)
+        calc(env(safe-area-inset-right, 0px) + 12px)
+        10px
+        calc(env(safe-area-inset-left, 0px) + 12px);
+      background:linear-gradient(to bottom, rgba(0,0,0,0.65), rgba(0,0,0,0));
       z-index:10;
+      pointer-events:none; /* permite tocar no vídeo fora dos botões */
     }
+
     .top-bar button {
-      background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.28);
-      border-radius:8px; padding:8px 14px; font-size:14px; cursor:pointer;
-      backdrop-filter: blur(4px);
+      pointer-events:auto;
+      background:rgba(255,255,255,0.15);
+      color:#fff;
+      border:1px solid rgba(255,255,255,0.28);
+      border-radius:10px;
+      padding:10px 16px;
+      font-size:clamp(12px, 3.4vw, 14px);
+      line-height:1;
+      cursor:pointer;
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+      font-weight:500;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:44%;           /* impede extrapolar em telas estreitas */
+      flex:1 0 auto;
+      transition:background .25s, transform .15s;
     }
-    .feedback-box {
-      position:fixed; bottom:0; left:0; width:100%;
-      padding:10px 14px 18px;
-      background:linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0));
-      color:#ddd; font-size:14px; z-index:10; text-align:center; min-height:48px;
+    .top-bar button:active { transform:translateY(1px); }
+    .top-bar button:focus-visible {
+      outline:2px solid #fff;
+      outline-offset:2px;
     }
-    .error { color:#ff6b6b; }
+
+    /* Moldura central */
     .scan-frame {
-      position:absolute; width:60vmin; height:60vmin; max-width:80%; max-height:60%;
-      border:2px solid rgba(255,255,255,0.35); border-radius:12px;
-      box-shadow:0 0 0 200vmax rgba(0,0,0,0.35); backdrop-filter: blur(2px);
+      position:absolute;
+      width:60vmin;
+      height:60vmin;
+      max-width:80%;
+      max-height:60%;
+      border:2px solid rgba(255,255,255,0.35);
+      border-radius:12px;
+      box-shadow:0 0 0 200vmax rgba(0,0,0,0.35);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter:blur(2px);
       pointer-events:none;
+      top:50%;
+      left:50%;
+      transform:translate(-50%, -50%);
     }
+
+    /* Overlay inicial (permite iniciar manualmente) */
     #startBtn {
-      position:absolute; inset:0; display:flex; flex-direction:column;
-      align-items:center; justify-content:center; gap:14px;
-      background:#000; color:#fff; font-size:16px; z-index:20;
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      background:#000;
+      color:#fff;
+      font-size:16px;
+      z-index:20;
+      text-align:center;
+      padding:20px;
     }
     #startBtn.hidden { display:none; }
     #startBtn button {
-      background:#1d70f2; color:#fff; border:none;
-      padding:14px 26px; font-size:16px; border-radius:10px; cursor:pointer;
+      background:#1d70f2;
+      color:#fff;
+      border:none;
+      padding:14px 26px;
+      font-size:16px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:500;
+      letter-spacing:.4px;
+      box-shadow:0 4px 14px -4px rgba(0,0,0,0.45);
+    }
+    #startBtn button:active { transform:translateY(1px); }
+
+    /* Caixa de feedback (base) */
+    .feedback-box {
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:calc(env(safe-area-inset-bottom, 0px) + 12px);
+      background:rgba(0,0,0,0.55);
+      color:#e4e4e4;
+      font-size:13px;
+      border-radius:24px;
+      padding:10px 18px;
+      text-align:center;
+      max-width: calc(100% - 40px);
+      z-index:10;
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+      line-height:1.2;
+    }
+    .feedback-box.error { background:rgba(185, 37, 37, 0.68); }
+
+    /* Ajustes para telas muito estreitas */
+    @media (max-width:360px) {
+      .top-bar {
+        gap:6px;
+        padding:
+          calc(env(safe-area-inset-top, 0px) + 6px)
+          calc(env(safe-area-inset-right, 0px) + 8px)
+          8px
+          calc(env(safe-area-inset-left, 0px) + 8px);
+      }
+      .top-bar button {
+        padding:9px 12px;
+        max-width:46%;
+      }
+      .scan-frame {
+        width:68vmin;
+        height:68vmin;
+      }
+    }
+
+    /* Paisagem estreita (evitar botões esmagados) */
+    @media (orientation:landscape) and (max-height:430px) {
+      .scan-frame {
+        width:50vmin;
+        height:50vmin;
+      }
+      .top-bar button {
+        font-size:12px;
+        padding:8px 12px;
+      }
     }
   </style>
 </head>
@@ -61,10 +202,12 @@
       <div class="scan-frame" id="scanFrame"></div>
       <video id="scanVideo" playsinline autoplay muted></video>
     </div>
+
     <div class="top-bar">
       <button type="button" id="backBtn">Voltar</button>
       <button type="button" id="cancelBtn">Cancelar</button>
     </div>
+
     <div class="feedback-box" id="feedbackBox">Carregando...</div>
   </div>
 
@@ -73,7 +216,6 @@
     window.APP_CONFIG = window.APP_CONFIG || { urls: {} };
     window.APP_CONFIG.urls.trussDetail = window.APP_CONFIG.urls.trussDetail || "{% url 'truss_detail' pk=0 %}".replace(/0\/?$/, "");
     window.APP_CONFIG.urls.home = window.APP_CONFIG.urls.home || "{% url 'home' %}";
-    // Disponibiliza variáveis locais
     const trussDetailUrl = window.APP_CONFIG.urls.trussDetail;
     const homeUrl = window.APP_CONFIG.urls.home;
   </script>

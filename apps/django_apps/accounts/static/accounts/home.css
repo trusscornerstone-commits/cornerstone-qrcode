@@ -9,75 +9,90 @@ body {
   min-height:100vh;
 }
 
-.logo { text-align:center; margin-top:50px; }
-.logo img { max-width:400px; height:auto; }
+/* ---------------- LOGO ---------------- */
+.logo {
+  text-align:center;
+  margin-top:42px !important;
+  margin-bottom:24px !important; /* separa da área de menu */
+  padding:0 12px;
+}
 
+.logo img {
+  /* A logo cresce até 620px, nunca menor que 240px, e escala com a viewport */
+  width:clamp(300px, 70vw, 820px);
+  height:auto;
+  display:block;
+  margin:0 auto;
+  /* Suaviza possíveis redimensionamentos rápidos */
+  image-rendering: auto;
+}
+
+/* (OPCIONAL) Se quiser a logo um pouco menor em telas muito grandes:
+   basta reduzir o 55vw para 45vw ou 50vw, ex.:
+   width: clamp(240px, 45vw, 620px);
+*/
+
+/* ---------------- CONTAINER PRINCIPAL ---------------- */
 .home-container {
   display:flex;
   flex-direction:column;
   align-items:center;
-  margin-top:30px;
-  padding:0 15px;
+  margin-top:0;
+  padding:0 15px 120px; /* padding bottom para não “colar” na footer fixa */
   width:100%;
+  box-sizing:border-box;
 }
 
 .home-container h2 {
   font-size:22px;
-  margin-bottom:25px;
+  margin:0 0 25px;
   font-weight:600;
   color:#2c2c2c;
   letter-spacing:.5px;
 }
 
+/* ---------------- BOTÕES ---------------- */
 .menu-btn {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-columns: 24px 1fr;
-  align-items: center;
-  column-gap: 12px;
-  padding: 14px 22px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  background: #212121;
-  color: #fff;
-  cursor: pointer;
-  transition: background .25s, transform .15s;
-  margin-bottom: 15px;
-  width: 100%;
-  max-width: 320px;
-  line-height: 1.15;
+  display:grid;
+  grid-auto-flow:column;
+  grid-template-columns:24px 1fr;
+  align-items:center;
+  column-gap:12px;
+  padding:14px 22px;
+  font-size:16px;
+  border:none;
+  border-radius:8px;
+  background:#212121;
+  color:#fff;
+  cursor:pointer;
+  transition:background .25s, transform .15s;
+  margin-bottom:15px;
+  width:100%;
+  max-width:320px;
+  line-height:1.15;
 }
 
 .menu-btn:hover { background:#2f2f2f; }
-.menu-btn:active { transform: translateY(1px); }
+.menu-btn:active { transform:translateY(1px); }
 
 .menu-btn__icon {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center; /* centra verticalmente o SVG */
-  justify-content: center;
-  /* Opcional: fundo para debug
-     background: rgba(255,0,0,.1); */
+  width:24px;
+  height:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .menu-btn__icon svg {
   width:20px;
   height:20px;
   display:block;
-  fill:#fff;
-}
-
-.menu-btn__icon svg {
-  width: 20px;
-  height: 20px;
-  display: block;
-  fill: currentColor; /* herda branco do botão */
+  fill:currentColor;
 }
 
 .menu-btn span { display:inline-block; }
 
+/* ---------------- FOOTER ---------------- */
 .footer {
   background:#f98d45;
   width:100vw;
@@ -88,14 +103,38 @@ body {
   z-index:10;
 }
 
-@media (max-width:768px) {
-  .logo img { max-width:150px; }
-  .menu-btn { font-size:15px; padding:12px 18px; }
+/* ---------------- MEDIA QUERIES ---------------- */
+/* Em tablets/médios: mantém presença da logo */
+@media (max-width: 900px) {
+  .logo img {
+    width: clamp(220px, 60vw, 560px);
+  }
+}
+
+/* Em smartphones: ainda maior que os botões, mas não exagerada */
+@media (max-width: 600px) {
+  .logo {
+    margin-top:32px;
+    margin-bottom:20px;
+  }
+  .logo img {
+    width: clamp(200px, 70vw, 480px);
+  }
+  .menu-btn {
+    font-size:15px;
+    padding:12px 18px;
+  }
   .footer { height:65px; }
 }
 
-@media (max-width:480px) {
-  .logo img { max-width:120px; }
-  .menu-btn { font-size:14px; padding:10px 16px; }
+/* Telas muito pequenas */
+@media (max-width: 400px) {
+  .logo img {
+    width: clamp(180px, 75vw, 420px);
+  }
+  .menu-btn {
+    font-size:14px;
+    padding:10px 16px;
+  }
   .footer { height:55px; }
 }
