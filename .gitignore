@@ -7,4 +7,4 @@ apps/qrcode_app/templates/qrcodes/
 # Ignorar PNG/PDF gerados em qualquer lugar (opcional):
 *.png
 *.pdf
-*.png
+#*.png
