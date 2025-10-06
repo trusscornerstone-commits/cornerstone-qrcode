@@ -209,3 +209,26 @@ if env_bool("PRINT_DB_ENGINE", False):
         print("DB_ENGINE_AT_RUNTIME:", DATABASES["default"]["ENGINE"])
     except Exception:
         pass
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}

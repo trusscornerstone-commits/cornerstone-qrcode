@@ -214,7 +214,8 @@
   <script>
     // Reutiliza APP_CONFIG definido em base ou define local se não existir
     window.APP_CONFIG = window.APP_CONFIG || { urls: {} };
-    window.APP_CONFIG.urls.trussDetail = window.APP_CONFIG.urls.trussDetail || "{% url 'truss_detail' pk=0 %}".replace(/0\/?$/, "");
+    //window.APP_CONFIG.urls.trussDetail = window.APP_CONFIG.urls.trussDetail || "{% url 'truss_detail' pk=0 %}".replace(/0\/?$/, "");
+    window.APP_CONFIG.urls.trussDetail = "{% url 'truss_base' %}".replace(/base\/?$/, "");
     window.APP_CONFIG.urls.home = window.APP_CONFIG.urls.home || "{% url 'home' %}";
     const trussDetailUrl = window.APP_CONFIG.urls.trussDetail;
     const homeUrl = window.APP_CONFIG.urls.home;
