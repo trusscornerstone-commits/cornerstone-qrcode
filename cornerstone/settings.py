@@ -1,6 +1,8 @@
 from pathlib import Path
 import os
 import dj_database_url
+import socket
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,21 +25,36 @@ def env_list(name, default=None, sep=","):
 # Segurança básica
 # --------------------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-change-me")
-DEBUG = env_bool("DJANGO_DEBUG", False)
+DEBUG = env_bool("DJANGO_DEBUG", True)
+
 
 # ALLOWED_HOSTS: se vazio e DEBUG=True, permite localhost; se produção e vazio -> problema
 _raw_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
 if _raw_hosts.strip():
     ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(",") if h.strip()]
 else:
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else []
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        "nidificational-darla-preintelligently.ngrok-free.dev",  # domínio atual do ngrok
+        ".ngrok-free.dev",
+    ]
+
+# Adiciona dinamicamente o host se a variável NGROK_HOST existir
+ngrok_host = os.getenv("NGROK_HOST")
+if ngrok_host:
+    ALLOWED_HOSTS.append(ngrok_host)
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://nidificational-darla-preintelligently.ngrok-free.dev",
+]
 
 # CSRF_TRUSTED_ORIGINS deve ter formato sem barra final
 _raw_csrf = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 if _raw_csrf.strip():
     CSRF_TRUSTED_ORIGINS = [o.rstrip("/") for o in _raw_csrf.split(",") if o.strip()]
 else:
-    CSRF_TRUSTED_ORIGINS = []
+    CSRF_TRUSTED_ORIGINS = ["https://nidificational-darla-preintelligently.ngrok-free.dev",]
 
 # --------------------------
 # Apps
@@ -51,8 +68,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "apps.django_apps.accounts",
-    "apps.qrcode_app",
+    "accounts",
+
 ]
 
 # --------------------------
@@ -70,7 +87,7 @@ MIDDLEWARE = [
 ]
 
 if os.getenv("ENABLE_LOGIN_REQUIRED_MW", "0") == "1":
-    MIDDLEWARE.append("apps.django_apps.accounts.middleware.LoginRequiredMiddleware")
+    MIDDLEWARE.append("accounts.middleware.LoginRequiredMiddleware")
 
 ROOT_URLCONF = "cornerstone.urls"
 WSGI_APPLICATION = "cornerstone.wsgi.application"
@@ -105,19 +122,13 @@ TEMPLATES = [
 # --------------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-if DATABASE_URL:
-    # Postgres (ou outro) configurado por URL
-    DATABASES = {
-        "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
-else:
-    # Fallback para build / dev sem Postgres
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "build.sqlite3",
-        }
-    }
+}
+
 
 # --------------------------
 # Senhas
@@ -187,7 +198,7 @@ if not DEBUG:
 # Auth
 # --------------------------
 AUTHENTICATION_BACKENDS = [
-    "apps.django_apps.accounts.backends.EmailOrUsernameBackend",
+    "accounts.backends.EmailOrUsernameBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
