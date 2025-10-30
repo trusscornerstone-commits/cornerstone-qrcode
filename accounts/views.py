@@ -5,7 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.http import JsonResponse, HttpResponse
+from django.utils import timezone
 from .models import Truss
+import re
 
 User = get_user_model()
 
@@ -45,52 +47,33 @@ def truss_detail(request, truss_id: int):
 def scan_truss_view(request):
     return render(request, "accounts/scan_truss.html")
 
-import re
-from django.http import JsonResponse
 
-def truss_qr_redirect(request):
-    qr_code_raw = request.GET.get("qr", "").strip()
-    if not qr_code_raw:
-        return JsonResponse({"error": "QR code vazio"}, status=400)
-
-    # Limpeza básica
-    qr_code_text = qr_code_raw.replace("\r", " ").replace("\n", " ").strip()
+@login_required
+def truss_qr_view(request):
+    qr_data = request.GET.get("qr")
 
     # Exemplo: "T20A QTY: 3 15-05-08"
-    # Vamos capturar cada parte:
-    pattern = r"(?P<truss_id>[A-Z]+\d+[A-Z]*)\s+QTY:\s*(?P<qty>\d+)\s+(?P<span>\d{2}-\d{2}-\d{2})"
-    match = re.search(pattern, qr_code_text)
+    if qr_data:
+        parts = qr_data.replace("QTY:", "").split()
+        truss_id = parts[0]
+        quantidade = int(parts[1])
+        span = parts[2]
 
-    if not match:
-        print(f"[ERRO] QR inválido: {qr_code_text}")
-        return JsonResponse({"error": "Formato do QR inválido", "raw": qr_code_text}, status=400)
+        truss, created = Truss.objects.get_or_create(
+            truss_id=truss_id,
+            defaults={"quantidade": quantidade, "span": span}
+        )
+    else:
+        return render(request, "qr_error.html", {"error": "QR inválido ou ausente"})
 
-    data = match.groupdict()
-    truss_id = data["truss_id"]
-    qty = int(data["qty"])
-    span = data["span"]
+    # Quando o botão for pressionado
+    if request.method == "POST":
+        truss.produzida = True
+        truss.produzido_por = request.user if request.user.is_authenticated else None
+        truss.data_producao = timezone.now()
+        truss.save()
 
-    # Mostra no terminal (ou substitua por gravação em arquivo / banco)
-    print("=== QR CODE LIDO ===")
-    print(f"Truss ID: {truss_id}")
-    print(f"Quantidade: {qty}")
-    print(f"Span: {span}")
-    print("====================")
-
-    # Exemplo opcional: salvar em arquivo local temporário
-    with open("qrcode_data_log.txt", "a", encoding="utf-8") as f:
-        f.write(f"{truss_id}, {qty}, {span}\n")
-
-    # Retorna como JSON (útil para testar via navegador)
-    return JsonResponse({
-        "status": "ok",
-        "truss_id": truss_id,
-        "qty": qty,
-        "span": span,
-        "raw": qr_code_text,
-    })
-
-
+    return render(request, "accounts/truss_detail.html", {"truss": truss})
 
 @login_required
 def em_construcao_view(request):

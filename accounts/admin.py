@@ -69,12 +69,4 @@ if has_field(Truss, "endereco"):
 
 @admin.register(Truss)
 class TrussAdmin(admin.ModelAdmin):
-    list_display = tuple(LIST_DISPLAY)
-    list_display_links = ("id", "truss_number")
-    search_fields = tuple(SEARCH_FIELDS)
-    list_filter = LIST_FILTER
-    ordering = tuple(ORDERING)
-    readonly_fields = tuple(READONLY_FIELDS)
-    fieldsets = tuple(FIELDSETS)
-    list_per_page = 50
-    save_on_top = True
+    list_display = ("id", "truss_id", "quantidade", "span", "produzida", "data_producao")

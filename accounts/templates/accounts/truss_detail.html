@@ -1,50 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Truss {{ truss.truss_number }}</title>
-  {% load static %}
-  <link rel="stylesheet" href="{% static 'accounts/truss-detail.css' %}">
+    <meta charset="UTF-8">
+    <title>Truss {{ truss.truss_id }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f6f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px 25px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h2 {
+            font-size: 26px;
+            color: #222;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 18px;
+            color: #555;
+            margin: 8px 0;
+        }
+        .produzida {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        .btn {
+            font-size: 20px;
+            padding: 14px 30px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: white;
+            width: 100%;
+            background-color: #28a745;
+            transition: background-color 0.2s ease;
+        }
+        .btn:hover {
+            background-color: #218838;
+        }
+        .footer {
+            margin-top: 25px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="title">{{ truss.truss_number }}</div>
+    <div class="card">
+        <h2>Treliça {{ truss.truss_id }}</h2>
+        <p><strong>Quantidade:</strong> {{ truss.quantidade }}</p>
+        <p><strong>Span:</strong> {{ truss.span }}</p>
 
-    <img src="{% static 'accounts/truss.jpg' %}" alt="Truss" class="image">
-
-    <button id="statusBtn" class="status-btn {% if truss.status|lower in:'instalado,completed' %}completed{% else %}ongoing{% endif %}">
-      {{ truss.status|default:"Truss Ongoing" }}
-    </button>
-
-    <h3>Description</h3>
-    <p class="description">
-      Details for truss {{ truss.truss_number }} (ID: {{ truss.id }}). Job: {{ truss.job_number }}.
-      Type: {{ truss.tipo }}. Qty: {{ truss.quantidade }}.
-    </p>
-
-    <div class="details">
-      <div><strong>Job</strong> {{ truss.job_number }}</div>
-      <div><strong>Truss Type</strong> {{ truss.tipo }}</div>
-      <div><strong>Qty</strong> {{ truss.quantidade }}</div>
-      <div><strong>Address</strong> {{ truss.endereco }}</div>
-      <div><strong>Length</strong> {{ truss.tamanho }}</div>
+        {% if truss.produzida %}
+            <p class="produzida">✅ Produzida em {{ truss.data_producao|date:"d/m/Y H:i" }}</p>
+            {% if truss.produzido_por %}
+                <p>Por: <strong>{{ truss.produzido_por.username }}</strong></p>
+            {% endif %}
+        {% else %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn">✅ Marcar como Produzida</button>
+            </form>
+        {% endif %}
     </div>
-  </div>
-
-  <script>
-    const statusBtn = document.getElementById("statusBtn");
-    statusBtn.addEventListener("click", () => {
-      if (statusBtn.classList.contains("ongoing")) {
-        statusBtn.classList.remove("ongoing");
-        statusBtn.classList.add("completed");
-        statusBtn.textContent = "Completed";
-      } else {
-        statusBtn.classList.remove("completed");
-        statusBtn.classList.add("ongoing");
-        statusBtn.textContent = "Truss Ongoing";
-      }
-    });
-  </script>
+    <div class="footer">
+        Sistema Cornerstone © 2025
+    </div>
 </body>
 </html>

@@ -13,7 +13,7 @@ urlpatterns = [
     path("home/", views.home, name="home"),
     path("truss/<int:pk>/", views.truss_detail_view, name="truss_detail"),
     path("scan-truss/", views.scan_truss_view, name="scan_truss"),
-    path("truss/", views.truss_qr_redirect, name="truss_qr_redirect"),
+    path("truss/", views.truss_qr_view, name="truss_qr_view"),
     path("em-construcao/", views.em_construcao_view, name="em_construcao"),
 
     # Staff/admin JSON
