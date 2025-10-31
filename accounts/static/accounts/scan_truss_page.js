@@ -45,8 +45,10 @@
     }
 
     try {
+      // 📸 Inicia a transmissão da câmera
       videoEl.srcObject = stream;
       await videoEl.play();
+
     } catch (playErr) {
       if (!userInitiated) {
         showManualStart("Toque para ativar o vídeo (bloqueio do navegador).");

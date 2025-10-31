@@ -1,102 +1,116 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Truss {{ truss.truss_id }}</title>
-    <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: #f6f6f6;
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truss {{ truss.truss_id }}</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #f6f6f6;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-        .card {
-            width: 90%;
-            max-width: 600px;
-            background: white;
-            border-radius: 16px;
-            padding: 40px 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            text-align: center;
-        }
+    .card {
+      width: 92%;
+      max-width: 450px;
+      background: white;
+      border-radius: 16px;
+      padding: 32px 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
 
-        h2 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
+    h2 {
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
 
-        p {
-            font-size: 20px;
-            margin: 8px 0;
-        }
+    p {
+      font-size: 18px;
+      margin: 6px 0;
+    }
 
-        .btn {
-            font-size: 22px;
-            padding: 14px 35px;
-            margin-top: 25px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            color: white;
-            width: 100%;
-            max-width: 400px;
-        }
+    .btn {
+      font-size: 18px;
+      padding: 12px 20px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      width: 100%;
+      max-width: 300px;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.2s ease;
+    }
 
-        .btn-success {
-            background-color: #28a745;
-        }
+    .btn-success {
+      background-color: #28a745;
+    }
 
-        .btn-success:hover {
-            background-color: #218838;
-        }
+    .btn-success:hover {
+      background-color: #218838;
+    }
 
-        .produzida {
-            color: #28a745;
-            font-weight: bold;
-            font-size: 22px;
-            margin-top: 20px;
-        }
+    .btn-secondary {
+      background-color: #ff6600;
+      margin-top: 12px;
+    }
 
-        @media (max-width: 500px) {
-            h2 {
-                font-size: 24px;
-            }
-            p {
-                font-size: 18px;
-            }
-            .btn {
-                font-size: 20px;
-                padding: 12px 25px;
-            }
-        }
-    </style>
+    .btn-secondary:hover {
+      background-color: #cc5200;
+    }
+
+    .produzida {
+      color: #28a745;
+      font-weight: bold;
+      font-size: 20px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 480px) {
+      h2 {
+        font-size: 22px;
+      }
+      p {
+        font-size: 16px;
+      }
+      .btn {
+        font-size: 16px;
+        padding: 10px 18px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Truss {{ truss.truss_id }}</h2>
-        <p><strong>Quantidade total:</strong> {{ truss.quantidade }}</p>
-        <p><strong>Span:</strong> {{ truss.span }}</p>
-        <p><strong>Série:</strong> {{ truss.serial_number }}</p>
+  <div class="card">
+    <h2>Truss {{ truss.truss_id }}</h2>
+    <p><strong>Quantity:</strong> {{ truss.quantidade }}</p>
+    <p><strong>Span:</strong> {{ truss.span }}</p>
+    <p><strong>Serial Number:</strong> {{ truss.serial_number }}</p>
 
-        {% if truss.produzida %}
-            <p class="produzida">
-                ✅ Produzida em {{ truss.data_producao|date:"d/m/Y H:i" }}
-            </p>
-            {% if truss.produzido_por %}
-                <p>Por: {{ truss.produzido_por.username }}</p>
-            {% endif %}
-        {% else %}
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-success">✅ Marcar como Produzida</button>
-            </form>
-        {% endif %}
-    </div>
+    {% if truss.produzida %}
+      <p class="produzida">
+        ✅ Produced on {{ truss.data_producao|date:"d/m/Y H:i" }}
+      </p>
+      {% if truss.produzido_por %}
+        <p>By: {{ truss.produzido_por.username }}</p>
+      {% endif %}
+    {% else %}
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">✅ Mark as Produced</button>
+      </form>
+    {% endif %}
+    
+    <a href="{% url 'scan_truss' %}" class="btn btn-secondary">📷 New Scan</a>
+  </div>
 </body>
 </html>
