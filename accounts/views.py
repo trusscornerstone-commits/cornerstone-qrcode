@@ -50,28 +50,37 @@ def scan_truss_view(request):
 
 @login_required
 def truss_qr_view(request):
-    qr_data = request.GET.get("qr")
+    qr_data = request.GET.get("qr", "").strip()
+    if not qr_data:
+        return render(request, "accounts/truss_detail.html", {"error": "QR inválido"})
 
-    # Exemplo: "T20A QTY: 3 15-05-08"
-    if qr_data:
-        parts = qr_data.replace("QTY:", "").split()
-        truss_id = parts[0]
-        quantidade = int(parts[1])
-        span = parts[2]
+    # --- Extração robusta dos dados ---
+    # Exemplo esperado: "T20A-1 QTY:3 15-05-08"
+    match = re.search(r'([A-Za-z0-9]+)(?:-(\d+))?', qr_data)
+    truss_id = match.group(1) if match else "?"
+    serial_number = int(match.group(2)) if match and match.group(2) else 1
 
-        truss, created = Truss.objects.get_or_create(
-            truss_id=truss_id,
-            defaults={"quantidade": quantidade, "span": span}
-        )
-    else:
-        return render(request, "qr_error.html", {"error": "QR inválido ou ausente"})
+    qty_match = re.search(r'QTY[:\s]+(\d+)', qr_data, re.IGNORECASE)
+    quantidade = int(qty_match.group(1)) if qty_match else 1
 
-    # Quando o botão for pressionado
+    # Span (procura o trecho que parece "15-05-08" ou similar)
+    span_match = re.search(r'\b\d{2}-\d{2}-\d{2}\b', qr_data)
+    span = span_match.group(0) if span_match else ""
+
+    # --- Criação/recuperação da truss ---
+    truss, _ = Truss.objects.get_or_create(
+        truss_id=truss_id,
+        serial_number=serial_number,
+        defaults={
+            "span": span,
+            "quantidade": quantidade,
+        },
+    )
+
+    # --- Marcar como produzida ---
     if request.method == "POST":
-        truss.produzida = True
-        truss.produzido_por = request.user if request.user.is_authenticated else None
-        truss.data_producao = timezone.now()
-        truss.save()
+        truss.marcar_produzida(request.user)
+        return redirect(request.path + f"?qr={qr_data}")
 
     return render(request, "accounts/truss_detail.html", {"truss": truss})
 

@@ -2,87 +2,101 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Truss {{ truss.truss_id }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Truss {{ truss.truss_id }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f6f6f6;
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
+            background-color: #f6f6f6;
+            font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            align-items: center;
         }
+
         .card {
+            width: 90%;
+            max-width: 600px;
             background: white;
             border-radius: 16px;
-            padding: 30px 25px;
-            width: 90%;
-            max-width: 400px;
+            padding: 40px 30px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             text-align: center;
         }
+
         h2 {
-            font-size: 26px;
-            color: #222;
-            margin-bottom: 20px;
+            font-size: 28px;
+            margin-bottom: 10px;
         }
+
         p {
-            font-size: 18px;
-            color: #555;
+            font-size: 20px;
             margin: 8px 0;
         }
-        .produzida {
-            color: #28a745;
-            font-weight: bold;
-            font-size: 20px;
-            margin-top: 20px;
-        }
+
         .btn {
-            font-size: 20px;
-            padding: 14px 30px;
+            font-size: 22px;
+            padding: 14px 35px;
             margin-top: 25px;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             color: white;
             width: 100%;
-            background-color: #28a745;
-            transition: background-color 0.2s ease;
+            max-width: 400px;
         }
-        .btn:hover {
+
+        .btn-success {
+            background-color: #28a745;
+        }
+
+        .btn-success:hover {
             background-color: #218838;
         }
-        .footer {
-            margin-top: 25px;
-            font-size: 14px;
-            color: #888;
+
+        .produzida {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 22px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 500px) {
+            h2 {
+                font-size: 24px;
+            }
+            p {
+                font-size: 18px;
+            }
+            .btn {
+                font-size: 20px;
+                padding: 12px 25px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Treliça {{ truss.truss_id }}</h2>
-        <p><strong>Quantidade:</strong> {{ truss.quantidade }}</p>
+        <h2>Truss {{ truss.truss_id }}</h2>
+        <p><strong>Quantidade total:</strong> {{ truss.quantidade }}</p>
         <p><strong>Span:</strong> {{ truss.span }}</p>
+        <p><strong>Série:</strong> {{ truss.serial_number }}</p>
 
         {% if truss.produzida %}
-            <p class="produzida">✅ Produzida em {{ truss.data_producao|date:"d/m/Y H:i" }}</p>
+            <p class="produzida">
+                ✅ Produzida em {{ truss.data_producao|date:"d/m/Y H:i" }}
+            </p>
             {% if truss.produzido_por %}
-                <p>Por: <strong>{{ truss.produzido_por.username }}</strong></p>
+                <p>Por: {{ truss.produzido_por.username }}</p>
             {% endif %}
         {% else %}
             <form method="post">
                 {% csrf_token %}
-                <button type="submit" class="btn">✅ Marcar como Produzida</button>
+                <button type="submit" class="btn btn-success">✅ Marcar como Produzida</button>
             </form>
         {% endif %}
-    </div>
-    <div class="footer">
-        Sistema Cornerstone © 2025
     </div>
 </body>
 </html>

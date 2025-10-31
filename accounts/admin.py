@@ -69,4 +69,6 @@ if has_field(Truss, "endereco"):
 
 @admin.register(Truss)
 class TrussAdmin(admin.ModelAdmin):
-    list_display = ("id", "truss_id", "quantidade", "span", "produzida", "data_producao")
+    list_display = ('truss_id', 'serial_number', 'span', 'produzida', 'produzido_por', 'data_producao')
+    list_filter = ('produzida', 'truss_id')
+    search_fields = ('truss_id', 'serial_number', 'span')
