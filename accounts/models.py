@@ -4,9 +4,9 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 class Truss(models.Model):
-    truss_id = models.CharField(max_length=50)  # Ex: T20A
-    serial_number = models.PositiveIntegerField(default=1)  # Ex: 1 de 3
-    quantidade = models.PositiveIntegerField(default=1)  # Total de peças (ex: 3)
+    truss_id = models.CharField(max_length=50)  
+    serial_number = models.PositiveIntegerField(default=1)  
+    quantidade = models.PositiveIntegerField(default=1)  
     span = models.CharField(max_length=20)
     produzida = models.BooleanField(default=False)
     data_producao = models.DateTimeField(null=True, blank=True)

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -9,11 +10,29 @@
       height: 100%;
       margin: 0;
       padding: 0;
-      background-color: #f6f6f6;
       font-family: Arial, sans-serif;
+      background-color: #f6f6f6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      padding-top: 40px;
+      text-align: center;
+    }
+
+    header img {
+      width: 160px;
+      height: auto;
+    }
+
+    .content {
+      flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
+      width: 100%;
     }
 
     .card {
@@ -21,9 +40,10 @@
       max-width: 450px;
       background: white;
       border-radius: 16px;
-      padding: 32px 24px;
+      padding: 32px 24px 40px 24px; /* espaço extra embaixo */
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       text-align: center;
+      box-sizing: border-box;
     }
 
     h2 {
@@ -60,10 +80,20 @@
     }
 
     .btn-secondary {
-      background-color: #ff6600;
-      margin-top: 12px;
-    }
-
+        background-color: #ff6600;
+        color: white;
+        font-size: 18px;
+        padding: 12px 0;
+        border-radius: 8px;
+        text-align: center;
+        text-decoration: none;
+        display: block; /* garante que não ultrapasse a caixa */
+        width: 100%;
+        margin-top: 16px;
+        font-weight: 600;
+        box-sizing: border-box; /* inclui padding dentro da largura */
+        transition: background-color 0.2s ease;
+        }
     .btn-secondary:hover {
       background-color: #cc5200;
     }
@@ -75,7 +105,19 @@
       margin-top: 18px;
     }
 
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background-color: #ff6600;
+    }
+
     @media (max-width: 480px) {
+      header img {
+        width: 130px;
+      }
       h2 {
         font-size: 22px;
       }
@@ -86,31 +128,45 @@
         font-size: 16px;
         padding: 10px 18px;
       }
+      footer {
+        height: 50px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Truss {{ truss.truss_id }}</h2>
-    <p><strong>Quantity:</strong> {{ truss.quantidade }}</p>
-    <p><strong>Span:</strong> {{ truss.span }}</p>
-    <p><strong>Serial Number:</strong> {{ truss.serial_number }}</p>
+  <header>
+    <img src="{% static 'accounts/cornerstone_logo.png' %}" alt="Cornerstone Logo">
+  </header>
 
-    {% if truss.produzida %}
-      <p class="produzida">
-        ✅ Produced on {{ truss.data_producao|date:"d/m/Y H:i" }}
-      </p>
-      {% if truss.produzido_por %}
-        <p>By: {{ truss.produzido_por.username }}</p>
+  <div class="content">
+    <div class="card">
+      <h2>Truss {{ truss.truss_id }}</h2>
+      <p><strong>Quantity:</strong> {{ truss.quantidade }}</p>
+      <p><strong>Span:</strong> {{ truss.span }}</p>
+      <p><strong>Serial Number:</strong> {{ truss.serial_number }}</p>
+
+      {% if truss.produzida %}
+        <p class="produzida">
+        {% load tz %}
+        {% timezone "America/New_York" %}
+          ✅ Produced on {{ truss.data_producao|date:"m/d/Y H:i" }}
+        {% endtimezone %}
+        </p>
+        {% if truss.produzido_por %}
+          <p>By: {{ truss.produzido_por.username }}</p>
+        {% endif %}
+      {% else %}
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success">✅ Mark as Produced</button>
+        </form>
       {% endif %}
-    {% else %}
-      <form method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-success">✅ Mark as Produced</button>
-      </form>
-    {% endif %}
-    
-    <a href="{% url 'scan_truss' %}" class="btn btn-secondary">📷 New Scan</a>
+
+      <a href="{% url 'scan_truss' %}" class="btn btn-secondary">📷 New Scan</a>
+    </div>
   </div>
+
+  <footer></footer>
 </body>
 </html>

@@ -3,6 +3,7 @@ import os
 import dj_database_url
 import socket
 import sys
+from django.utils import timezone
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -84,6 +85,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
 ]
 
 if os.getenv("ENABLE_LOGIN_REQUIRED_MW", "0") == "1":
@@ -144,7 +146,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Locale / Time
 # --------------------------
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"  # ou "America/Sao_Paulo"
+TIME_ZONE = 'America/New_York'
 USE_I18N = True
 USE_TZ = True
 
