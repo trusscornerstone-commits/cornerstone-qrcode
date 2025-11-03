@@ -6,19 +6,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Truss {{ truss.truss_id }}</title>
   <style>
+    :root {
+      --primary: #ff6600;
+      --primary-dark: #cc5200;
+      --success: #28a745;
+      --success-dark: #218838;
+      --bg: #f6f6f6;
+      --text: #222;
+      --radius: 16px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f6f6f6;
+      font-family: "Inter", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
     header {
-      padding-top: 40px;
+      padding-top: 36px;
       text-align: center;
     }
 
@@ -33,17 +45,25 @@
       justify-content: center;
       align-items: center;
       width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
     .card {
-      width: 92%;
-      max-width: 450px;
+      width: 100%;
+      max-width: 420px;
       background: white;
-      border-radius: 16px;
-      padding: 32px 24px 40px 24px; /* espaço extra embaixo */
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      box-shadow: var(--shadow);
       text-align: center;
       box-sizing: border-box;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
     }
 
     h2 {
@@ -52,54 +72,44 @@
     }
 
     p {
-      font-size: 18px;
+      font-size: 17px;
       margin: 6px 0;
     }
 
     .btn {
       font-size: 18px;
-      padding: 12px 20px;
-      margin-top: 20px;
+      padding: 14px 0;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       color: white;
       width: 100%;
-      max-width: 300px;
+      margin-top: 18px;
       text-decoration: none;
       display: inline-block;
-      transition: all 0.2s ease;
+      transition: transform 0.15s ease, background-color 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: scale(1.02);
     }
 
     .btn-success {
-      background-color: #28a745;
+      background-color: var(--success);
     }
-
     .btn-success:hover {
-      background-color: #218838;
+      background-color: var(--success-dark);
     }
 
     .btn-secondary {
-        background-color: #ff6600;
-        color: white;
-        font-size: 18px;
-        padding: 12px 0;
-        border-radius: 8px;
-        text-align: center;
-        text-decoration: none;
-        display: block; /* garante que não ultrapasse a caixa */
-        width: 100%;
-        margin-top: 16px;
-        font-weight: 600;
-        box-sizing: border-box; /* inclui padding dentro da largura */
-        transition: background-color 0.2s ease;
-        }
+      background-color: var(--primary);
+    }
     .btn-secondary:hover {
-      background-color: #cc5200;
+      background-color: var(--primary-dark);
     }
 
     .produzida {
-      color: #28a745;
+      color: var(--success);
       font-weight: bold;
       font-size: 20px;
       margin-top: 18px;
@@ -110,8 +120,8 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 60px;
-      background-color: #ff6600;
+      height: 56px;
+      background-color: var(--primary);
     }
 
     @media (max-width: 480px) {
@@ -126,10 +136,10 @@
       }
       .btn {
         font-size: 16px;
-        padding: 10px 18px;
+        padding: 12px 0;
       }
       footer {
-        height: 50px;
+        height: 48px;
       }
     }
   </style>
@@ -148,10 +158,10 @@
 
       {% if truss.produzida %}
         <p class="produzida">
-        {% load tz %}
-        {% timezone "America/New_York" %}
-          ✅ Produced on {{ truss.data_producao|date:"m/d/Y H:i" }}
-        {% endtimezone %}
+          {% load tz %}
+          {% timezone "America/New_York" %}
+            ✅ Produced on {{ truss.data_producao|date:"d/m/Y H:i" }}
+          {% endtimezone %}
         </p>
         {% if truss.produzido_por %}
           <p>By: {{ truss.produzido_por.username }}</p>

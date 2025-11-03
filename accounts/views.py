@@ -38,8 +38,8 @@ def truss_detail_view(request, pk: int):
     truss = get_object_or_404(Truss, pk=pk)
     return render(request, "accounts/truss_detail.html", {"truss": truss})
 
+
 def truss_detail(request, truss_id: int):
-    # Encaminha para a implementação existente esperando 'pk'
     return truss_detail_view(request, pk=truss_id)
 
 
@@ -54,8 +54,7 @@ def truss_qr_view(request):
     if not qr_data:
         return render(request, "accounts/truss_detail.html", {"error": "QR inválido"})
 
-    # --- Extração robusta dos dados ---
-    # Exemplo esperado: "T20A-1 QTY:3 15-05-08"
+    # --- Extração dos dados do QR ---
     match = re.search(r'([A-Za-z0-9]+)(?:-(\d+))?', qr_data)
     truss_id = match.group(1) if match else "?"
     serial_number = int(match.group(2)) if match and match.group(2) else 1
@@ -63,26 +62,29 @@ def truss_qr_view(request):
     qty_match = re.search(r'QTY[:\s]+(\d+)', qr_data, re.IGNORECASE)
     quantidade = int(qty_match.group(1)) if qty_match else 1
 
-    # Span (procura o trecho que parece "15-05-08" ou similar)
     span_match = re.search(r'\b\d{2}-\d{2}-\d{2}\b', qr_data)
     span = span_match.group(0) if span_match else ""
 
-    # --- Criação/recuperação da truss ---
+    # --- Recuperar ou criar a truss ---
     truss, _ = Truss.objects.get_or_create(
         truss_id=truss_id,
         serial_number=serial_number,
         defaults={
             "span": span,
             "quantidade": quantidade,
+            "floor": None,
+            "project": None,
+            "table_name": None,
         },
     )
 
-    # --- Marcar como produzida ---
+    # --- Atualização de produção ---
     if request.method == "POST":
         truss.marcar_produzida(request.user)
         return redirect(request.path + f"?qr={qr_data}")
 
     return render(request, "accounts/truss_detail.html", {"truss": truss})
+
 
 @login_required
 def em_construcao_view(request):
@@ -102,6 +104,7 @@ def logout_view(request):
 
 def health(request):
     return JsonResponse({"status": "ok"})
+
 
 from django.shortcuts import redirect
 
