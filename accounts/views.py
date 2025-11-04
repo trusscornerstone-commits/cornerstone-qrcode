@@ -24,7 +24,7 @@ def login_page(request):
             if next_url and url_has_allowed_host_and_scheme(next_url, {request.get_host()}):
                 return redirect(next_url)
             return redirect("home")
-        messages.error(request, "Email/Usuário ou senha inválidos")
+        messages.error(request, "Wrong user or password")
     return render(request, "accounts/login_page.html")
 
 
@@ -52,7 +52,7 @@ def scan_truss_view(request):
 def truss_qr_view(request):
     qr_data = request.GET.get("qr", "").strip()
     if not qr_data:
-        return render(request, "accounts/truss_detail.html", {"error": "QR inválido"})
+        return render(request, "accounts/truss_detail.html", {"error": "Invalid QRCode"})
 
     # --- Extração dos dados do QR ---
     match = re.search(r'([A-Za-z0-9]+)(?:-(\d+))?', qr_data)
@@ -60,7 +60,7 @@ def truss_qr_view(request):
     serial_number = int(match.group(2)) if match and match.group(2) else 1
 
     qty_match = re.search(r'QTY[:\s]+(\d+)', qr_data, re.IGNORECASE)
-    quantidade = int(qty_match.group(1)) if qty_match else 1
+    quantity = int(qty_match.group(1)) if qty_match else 1
 
     span_match = re.search(r'\b\d{2}-\d{2}-\d{2}\b', qr_data)
     span = span_match.group(0) if span_match else ""
@@ -71,16 +71,16 @@ def truss_qr_view(request):
         serial_number=serial_number,
         defaults={
             "span": span,
-            "quantidade": quantidade,
+            "quantity": quantity,
             "floor": None,
             "project": None,
-            "table_name": None,
+            "table_number": None,
         },
     )
 
     # --- Atualização de produção ---
     if request.method == "POST":
-        truss.marcar_produzida(request.user)
+        truss.check_produced(request.user)
         return redirect(request.path + f"?qr={qr_data}")
 
     return render(request, "accounts/truss_detail.html", {"truss": truss})

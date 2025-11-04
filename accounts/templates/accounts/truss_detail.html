@@ -152,19 +152,19 @@
   <div class="content">
     <div class="card">
       <h2>Truss {{ truss.truss_id }}</h2>
-      <p><strong>Quantity:</strong> {{ truss.quantidade }}</p>
+      <p><strong>Quantity:</strong> {{ truss.quantity }}</p>
       <p><strong>Span:</strong> {{ truss.span }}</p>
       <p><strong>Serial Number:</strong> {{ truss.serial_number }}</p>
 
-      {% if truss.produzida %}
+      {% if truss.produced %}
         <p class="produzida">
           {% load tz %}
           {% timezone "America/New_York" %}
-            ✅ Produced on {{ truss.data_producao|date:"d/m/Y H:i" }}
+            ✅ Produced on {{ truss.production_date|date:"d/m/Y H:i" }}
           {% endtimezone %}
         </p>
-        {% if truss.produzido_por %}
-          <p>By: {{ truss.produzido_por.username }}</p>
+        {% if truss.produced_by %}
+          <p>By: {{ truss.produced_by.username }}</p>
         {% endif %}
       {% else %}
         <form method="post">

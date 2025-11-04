@@ -1,9 +1,14 @@
 from django.contrib import admin
 from django.core.exceptions import FieldDoesNotExist
 from .models import Truss
+import pytz
+
+# Define o fuso horário de Boston
+BOSTON_TZ = pytz.timezone("America/New_York")
 
 
 def has_field(model, name: str) -> bool:
+    """Verifica se o campo existe no modelo"""
     try:
         model._meta.get_field(name)
         return True
@@ -13,62 +18,46 @@ def has_field(model, name: str) -> bool:
         return False
 
 
-# list_display dinâmico (usa updated_at se existir)
-LIST_DISPLAY = ["id", "truss_number", "job_number"]
-for f in ("tipo", "quantidade", "status"):
-    if has_field(Truss, f):
-        LIST_DISPLAY.append(f)
-if has_field(Truss, "updated_at"):
-    LIST_DISPLAY.append("updated_at")
+# Configurações dinâmicas baseadas nos campos do modelo
+LIST_DISPLAY = ["id", "truss_id", "serial_number", "span", "quantity", "produced"]
+if has_field(Truss, "producer_name"):
+    LIST_DISPLAY.append("producer_name")
+LIST_DISPLAY += ["formatted_production_date", "formatted_create_date", "formatted_update_date"]
 
-# ordering dinâmico (prioriza -updated_at se existir)
-ORDERING = []
-if has_field(Truss, "updated_at"):
-    ORDERING.append("-updated_at")
-ORDERING.append("id")
-
-# readonly_fields dinâmico (created_at/updated_at se existirem)
+ORDERING = ["-update_date", "id"]
 READONLY_FIELDS = []
-for f in ("created_at", "updated_at"):
+for f in ("create_date", "update_date"):
     if has_field(Truss, f):
         READONLY_FIELDS.append(f)
 
-# fieldsets dinâmicos
-identificacao_fields = ["id", "job_number", "truss_number"]
-
-especificacoes_fields = []
-for f in ("tipo", "quantidade", "ply", "tamanho", "status"):
-    if has_field(Truss, f):
-        especificacoes_fields.append(f)
-
-localizacao_fields = []
-if has_field(Truss, "endereco"):
-    localizacao_fields.append("endereco")
-
-metadados_fields = []
-for f in ("created_at", "updated_at"):
-    if has_field(Truss, f):
-        metadados_fields.append(f)
-
-FIELDSETS = [
-    ("Identificação", {"fields": tuple(identificacao_fields)}),
-    ("Especificações", {"fields": tuple(especificacoes_fields)}),
-]
-if localizacao_fields:
-    FIELDSETS.append(("Localização", {"fields": tuple(localizacao_fields)}))
-if metadados_fields:
-    FIELDSETS.append(("Metadados", {"fields": tuple(metadados_fields)}))
-
-
-# list_filter e search_fields apenas com campos existentes
-LIST_FILTER = tuple(f for f in ("status", "tipo") if has_field(Truss, f))
-SEARCH_FIELDS = ["id", "truss_number", "job_number"]
-if has_field(Truss, "endereco"):
-    SEARCH_FIELDS.append("endereco")
+LIST_FILTER = ("produced", "truss_id")
+SEARCH_FIELDS = ("truss_id", "serial_number", "span")
 
 
 @admin.register(Truss)
 class TrussAdmin(admin.ModelAdmin):
-    list_display = ('truss_id', 'serial_number', 'span', 'produzida', 'produzido_por', 'data_producao')
-    list_filter = ('produzida', 'truss_id')
-    search_fields = ('truss_id', 'serial_number', 'span')
+    list_display = LIST_DISPLAY
+    list_filter = LIST_FILTER
+    search_fields = SEARCH_FIELDS
+    readonly_fields = READONLY_FIELDS
+    ordering = ORDERING
+
+    # 🔹 Utilitário interno para formatar datas no fuso de Boston
+    def _format_datetime(self, dt):
+        if not dt:
+            return ""
+        dt_boston = dt.astimezone(BOSTON_TZ).replace(microsecond=0)
+        return dt_boston.strftime("%m-%d-%Y %H:%M:%S")
+
+    # 🔹 Exibição formatada no admin
+    def formatted_create_date(self, obj):
+        return self._format_datetime(obj.create_date)
+    formatted_create_date.short_description = "Created"
+
+    def formatted_update_date(self, obj):
+        return self._format_datetime(obj.update_date)
+    formatted_update_date.short_description = "Last Updated"
+
+    def formatted_production_date(self, obj):
+        return self._format_datetime(obj.production_date)
+    formatted_production_date.short_description = "Produced At"

@@ -145,6 +145,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # --------------------------
 # Locale / Time
 # --------------------------
+DATETIME_FORMAT = "m-d-Y H:i:s"
+USE_L10N = False
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = 'America/New_York'
 USE_I18N = True
