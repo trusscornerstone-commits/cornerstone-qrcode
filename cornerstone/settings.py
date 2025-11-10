@@ -4,9 +4,46 @@ import dj_database_url
 import socket
 import sys
 from django.utils import timezone
+import pytz
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+#-------LOGS-------------------
+LOG_DIR = os.path.join(BASE_DIR, "logs")
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+BOSTON_TZ = pytz.timezone("America/New_York")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[%(asctime)s] [%(levelname)s] %(message)s",
+            "datefmt": "%m-%d-%Y %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "production.log"),
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "production_logger": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+# -------------------------
 # --------------------------
 # Helpers de ambiente
 # --------------------------
@@ -103,21 +140,21 @@ LOGOUT_REDIRECT_URL = "login"
 # --------------------------
 # Templates
 # --------------------------
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
-    },
-]
+#TEMPLATES = [
+#   {
+#       "BACKEND": "django.template.backends.django.DjangoTemplates",
+#       "DIRS": [BASE_DIR / "templates"],
+#       "APP_DIRS": True,
+#       "OPTIONS": {
+#           "context_processors": [
+#               "django.template.context_processors.debug",
+#               "django.template.context_processors.request",
+#               "django.contrib.auth.context_processors.auth",
+#               "django.contrib.messages.context_processors.messages",
+#           ],
+#       },
+#   },
+#
 
 # --------------------------
 # Banco de Dados

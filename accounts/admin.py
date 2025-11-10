@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.core.exceptions import FieldDoesNotExist
-from .models import Truss
+from .models import QrCodeTruss as Truss
 import pytz
 
 # Define o fuso horário de Boston
@@ -19,19 +19,20 @@ def has_field(model, name: str) -> bool:
 
 
 # Configurações dinâmicas baseadas nos campos do modelo
-LIST_DISPLAY = ["id", "truss_id", "serial_number", "span", "quantity", "produced"]
+LIST_DISPLAY = [f for f in ["id", "truss_id", "unit_number", "span", "quantity", "produced"] if has_field(Truss, f)]
+
 if has_field(Truss, "producer_name"):
     LIST_DISPLAY.append("producer_name")
+
 LIST_DISPLAY += ["formatted_production_date", "formatted_create_date", "formatted_update_date"]
 
 ORDERING = ["-update_date", "id"]
-READONLY_FIELDS = []
-for f in ("create_date", "update_date"):
-    if has_field(Truss, f):
-        READONLY_FIELDS.append(f)
+
+READONLY_FIELDS = [f for f in ("create_date", "update_date") if has_field(Truss, f)]
 
 LIST_FILTER = ("produced", "truss_id")
-SEARCH_FIELDS = ("truss_id", "serial_number", "span")
+
+SEARCH_FIELDS = tuple(f for f in ("truss_id", "unit_number", "span") if has_field(Truss, f))
 
 
 @admin.register(Truss)

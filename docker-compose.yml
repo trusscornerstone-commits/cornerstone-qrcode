@@ -26,40 +26,8 @@ services:
       DATABASE_URL: postgres://cornerstone:cornerstone@db:5432/cornerstone
       DJANGO_DEBUG: "1"
       RUN_MIGRATIONS: "1"
-      RUN_COLLECTSTATIC: "0"   # não roda em dev
-    command: ["sh", "./docker/entrypoints/django-entrypoint.sh"]
-    networks:
-      - backend
-
-  truss_seed:
-    # One-shot: migra e importa CSV -> encerra
-    env_file: .env
-    build:
-      context: .
-      dockerfile: docker/django.Dockerfile
-    command: >
-      sh -lc '
-        echo "[truss_seed] Aplicando migrations..." &&
-        python manage.py migrate --noinput &&
-        echo "[truss_seed] Importando trusses do CSV..." &&
-        python manage.py import_trusses --csv qrcode_app/trusses.csv &&
-        echo "[truss_seed] OK"
-      '
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: cornerstone
-      DB_PASSWORD: cornerstone
-      DATABASE_URL: postgres://cornerstone:cornerstone@db:5432/cornerstone
-      DJANGO_DEBUG: "0"
-      RUN_MIGRATIONS: "0"
       RUN_COLLECTSTATIC: "0"
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - .:/app
-    restart: "no"
+    command: ["sh", "./docker/entrypoints/django-entrypoint.sh"]
     networks:
       - backend
 
@@ -81,35 +49,6 @@ services:
       retries: 15
     networks:
       - backend
-
-  fastapi:
-    build:
-      context: .
-      dockerfile: docker/fastapi.Dockerfile
-    command: sh docker/entrypoints/fastapi-entrypoint.sh
-    volumes:
-      - .:/app
-    ports:
-      - "8001:8001"
-    depends_on:
-      - db
-    networks:
-      - backend
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx-1
-    volumes:
-      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
-      - staticfiles:/app/staticfiles
-    ports:
-      - "80:80"
-    depends_on:
-      - django
-      - fastapi
-    networks:
-      - backend
-    restart: always
 
 volumes:
   postgres_data:

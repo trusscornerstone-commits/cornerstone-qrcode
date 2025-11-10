@@ -152,9 +152,10 @@
   <div class="content">
     <div class="card">
       <h2>Truss {{ truss.truss_id }}</h2>
+      <p><strong>Project:</strong> {{ truss.project }}</p>
       <p><strong>Quantity:</strong> {{ truss.quantity }}</p>
-      <p><strong>Span:</strong> {{ truss.span }}</p>
-      <p><strong>Serial Number:</strong> {{ truss.serial_number }}</p>
+      <p><strong>Unit Number:</strong> {{ truss.unit_number }}</p>
+      <p><strong>Batch:</strong> {{ truss.batch }}</p>
 
       {% if truss.produced %}
         <p class="produzida">
