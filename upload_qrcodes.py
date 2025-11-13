@@ -7,8 +7,9 @@ import numpy as np
 import re
 import shutil
 import logging
+import random  # <--- adicionado para gerar números aleatórios
 from colorama import Fore, Style, init
-from zoneinfo import ZoneInfo  # Disponível no Python 3.9+
+from zoneinfo import ZoneInfo  # Python 3.9+
 
 init(autoreset=True)
 
@@ -17,7 +18,6 @@ BASE_DIR = r"C:\Users\FATEX\Documents\qrcodes"
 BACKUP_DIR = os.path.join(BASE_DIR, "backup")
 LOG_PATH = os.path.join(BASE_DIR, "logs\qrcode_import.log")
 
-# Configuração do log
 logging.basicConfig(
     filename=LOG_PATH,
     level=logging.INFO,
@@ -42,7 +42,6 @@ DB_CONFIG = {
 
 # ---------------------- BANCO ----------------------
 def ensure_table_and_constraints(conn):
-    """Cria tabela se não existir."""
     with conn.cursor() as cur:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS qr_codeTrusses (
@@ -65,13 +64,15 @@ def ensure_table_and_constraints(conn):
     conn.commit()
 
 def insert_unit_rows(conn, truss_id, quantity, span, floor, project, counters):
-    """Cria uma linha por unidade e monta o serial_number corretamente."""
+    """Cria uma linha por unidade, sorteando table_number de 1 a 4."""
     boston_tz = ZoneInfo("America/New_York")
     now = datetime.now(boston_tz).strftime("%Y-%m-%d %H:%M:%S")
 
+    # 🔹 table_number aleatório entre 1 e 4
+    table_number = 1#str(random.randint(1, 4))
+
     for unit_number in range(1, quantity + 1):
         serial_number = f"{truss_id}-{floor}-{span}-{unit_number}-of-{quantity}"
-
         try:
             with conn.cursor() as cur:
                 cur.execute("""
@@ -95,14 +96,14 @@ def insert_unit_rows(conn, truss_id, quantity, span, floor, project, counters):
                     now,
                     floor,
                     project,
-                    None,
+                    table_number,  # <--- aqui entra o número da mesa
                     now,
                     None,
                     unit_number
                 ))
             conn.commit()
-            print(f"{Fore.GREEN}✅ Inserido: {serial_number}")
-            logging.info(f"Inserido: {serial_number}")
+            print(f"{Fore.GREEN}✅ Inserido: {serial_number} (Mesa {table_number})")
+            logging.info(f"Inserido: {serial_number} (Mesa {table_number})")
             counters["sucessos"] += 1
         except Exception as e:
             conn.rollback()
@@ -118,16 +119,11 @@ def insert_unit_rows(conn, truss_id, quantity, span, floor, project, counters):
 
 # ---------------------- PARSE QR ----------------------
 def parse_qr_data(text):
-    """
-    Exemplo de texto:
-    T03 QTY: 1 OF 2 45-02-14 NEW_LABEL BATCH: 250018A
-    """
     text = " ".join(text.split())
     parts = text.split()
 
     truss_id = parts[0]
 
-    # Quantity total (após "OF")
     total_qty = 1
     if "OF" in parts:
         try:
@@ -135,18 +131,15 @@ def parse_qr_data(text):
         except:
             pass
 
-    # Span (ex: 45-02-14)
     span_match = re.search(r"\b\d{2}-\d{2}-\d{2}\b", text)
     span = span_match.group(0) if span_match else "unknown"
 
-    # Floor (após "BATCH:")
     floor = "N/A"
     if "BATCH:" in parts:
         i = parts.index("BATCH:") + 1
         if i < len(parts):
             floor = parts[i]
 
-    # Project (token após span)
     project = "N/A"
     try:
         si = parts.index(span)
@@ -186,12 +179,9 @@ for i, img in enumerate(pages):
     retval, decoded_infos, points, _ = detector.detectAndDecodeMulti(img)
 
     if retval and decoded_infos:
-        # Pegue apenas o primeiro QR válido da página
         for qr_data in decoded_infos:
             qr_data = qr_data.strip()
-            if not qr_data:
-                continue
-            if qr_data in processed_qrs:
+            if not qr_data or qr_data in processed_qrs:
                 continue
 
             processed_qrs.add(qr_data)
@@ -226,13 +216,10 @@ try:
     logging.info(f"PDF movido para backup: {backup_path}")
 except PermissionError as e:
     if e.winerror == 32:
-        # arquivo está aberto — cria cópia com timestamp
         alt_backup_path = os.path.join(BACKUP_DIR, f"{timestamp}_{backup_name}")
         shutil.copy2(PDF_PATH, alt_backup_path)
         print(f"{Fore.YELLOW}⚠️ PDF estava aberto — criada cópia: {alt_backup_path}")
         logging.warning(f"PDF estava aberto — cópia criada: {alt_backup_path}")
-
-        # tenta excluir o original (pode falhar se ainda estiver aberto)
         try:
             os.remove(PDF_PATH)
             print(f"{Fore.CYAN}🗑️ Original removido após cópia.")

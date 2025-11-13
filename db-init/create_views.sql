@@ -1,5 +1,12 @@
 -- ============================================================
--- 1) Função: converte "46-02-08" → pés decimais (NUMERIC)
+-- LIMPEZA GERAL (remove antigas para evitar conflito)
+-- ============================================================
+
+DROP VIEW IF EXISTS public.vw_production_clean CASCADE;
+DROP VIEW IF EXISTS public.vw_production_overview_full CASCADE;
+
+-- ============================================================
+-- 1) Função utilitária: converte "46-02-08" → pés decimais
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.parse_span_feet(span_text TEXT)
@@ -38,12 +45,10 @@ BEGIN
 END;
 $$;
 
-
 -- ============================================================
--- 2) View detalhada: vw_production_clean
+-- 2) View detalhada base (com datas formatadas e fuso de NY)
 -- ============================================================
 
-DROP VIEW IF EXISTS public.vw_production_clean;
 CREATE VIEW public.vw_production_clean AS
 SELECT
     p.id,
@@ -56,114 +61,111 @@ SELECT
     p.unit_number,
     p.quantity,
     p.produced,
-    p.production_date,
-    p.create_date,
-    p.update_date,
+
+    -- Conversão de datas com fuso horário
+    (p.production_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') AS production_date_ny,
+    TO_CHAR((p.production_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York'), 'YYYY-MM-DD HH24:MI:SS') AS production_date_text,
+
+    (p.create_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') AS create_date_ny,
+    TO_CHAR((p.create_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York'), 'YYYY-MM-DD HH24:MI:SS') AS create_date_text,
+
+    (p.update_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') AS update_date_ny,
+    TO_CHAR((p.update_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York'), 'YYYY-MM-DD HH24:MI:SS') AS update_date_text,
+
+    DATE_TRUNC('day', p.production_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')::DATE AS production_day,
+    DATE_TRUNC('month', p.production_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')::DATE AS production_month,
+
     p.span AS span_raw,
-
     public.parse_span_feet(p.span) AS span_feet,
+    public.parse_span_feet(p.span) * 0.3048 AS span_meters,
 
-    CASE 
-        WHEN public.parse_span_feet(p.span) IS NOT NULL 
-        THEN public.parse_span_feet(p.span) * 0.3048 
-        ELSE NULL 
-    END AS span_meters,
-
-    public.parse_span_feet(p.span) AS span_planned_feet,
-
-    CASE 
-        WHEN p.produced THEN public.parse_span_feet(p.span)
-        ELSE 0 
-    END AS span_produced_feet,
-
-    CASE 
-        WHEN p.produced THEN 1.0 ELSE 0.0 
-    END AS percent_done
+    CASE WHEN p.produced THEN public.parse_span_feet(p.span) ELSE 0 END AS span_produced_feet,
+    CASE WHEN p.produced THEN 1 ELSE 0 END AS produced_flag
 
 FROM public.qr_codetrusses p;
 
-
 -- ============================================================
--- 3) View agregada por truss_id + dimensões de tempo e local
+-- 3) View principal: vw_production_overview_full
 -- ============================================================
+-- Essa view:
+-- - Agrega por data, floor, mesa e projeto
+-- - Mostra totais cumulativos até cada dia
+-- - Mantém total_planned fixo (chumbado)
+-- - Inclui campos de data, projeto e produção
 
-DROP VIEW IF EXISTS public.vw_production_truss_summary CASCADE;
-CREATE VIEW public.vw_production_truss_summary AS
-SELECT
-    p.truss_id,
-    MIN(p.project) AS project,
-    MIN(p.floor) AS floor,
-    MIN(p.table_number) AS table_number,
+CREATE VIEW public.vw_production_overview_full AS
+WITH base AS (
+    SELECT
+        project,
+        floor,
+        table_number,
+        production_day,
+        production_month,
+        produced,
+        span_feet,
+        span_produced_feet,
+        update_date_ny,
+        production_date_ny,
+        produced_flag,
+        -- define total global fixo
+        COUNT(*) OVER () AS total_planned_global
+    FROM public.vw_production_clean
+),
 
-    -- Datas para filtros
-    DATE_TRUNC('day', MIN(p.production_date))::DATE AS production_day,
-    DATE_TRUNC('month', MIN(p.production_date))::DATE AS production_month,
+days AS (
+    SELECT DISTINCT production_day FROM base WHERE production_day IS NOT NULL
+),
 
-    COUNT(*) AS total_planned,
-    SUM(CASE WHEN p.produced THEN 1 ELSE 0 END) AS total_produced,
+aggregated AS (
+    SELECT
+        d.production_day,
+        b.production_month,
+        b.project,
+        b.floor,
+        b.table_number,
+        MAX(b.update_date_ny) AS last_update_date,
+        MAX(b.production_date_ny) AS last_production_date,
 
-    CASE 
-        WHEN COUNT(*) = 0 THEN 0
-        ELSE SUM(CASE WHEN p.produced THEN 1 ELSE 0 END)::NUMERIC / COUNT(*)
-    END AS percent_done,
+        -- total planejado fixo
+        MAX(b.total_planned_global) AS total_planned,
 
-    SUM(COALESCE(public.parse_span_feet(p.span), 0)) AS span_planned_feet,
-    SUM(CASE WHEN p.produced THEN COALESCE(public.parse_span_feet(p.span), 0) ELSE 0 END) AS span_produced_feet,
+        -- total produzido até o dia
+        SUM(b.produced_flag) FILTER (WHERE b.production_day <= d.production_day) AS total_produced,
 
-    MAX(p.update_date) AS last_update_date,
+        -- spans acumulados
+        SUM(b.span_feet) AS span_planned_feet,
+        SUM(b.span_produced_feet) FILTER (WHERE b.production_day <= d.production_day) AS span_produced_feet,
 
-    SUM(
+        -- percentual acumulado
         CASE 
-            WHEN p.produced AND p.production_date >= (now() - interval '1 hour') 
-            THEN 1 ELSE 0 
-        END
-    ) AS produced_last_hour
+            WHEN MAX(b.total_planned_global) = 0 THEN 0
+            ELSE SUM(b.produced_flag) FILTER (WHERE b.production_day <= d.production_day)::NUMERIC
+                 / MAX(b.total_planned_global)
+        END AS percent_done,
 
-FROM public.qr_codetrusses p
-GROUP BY 
-    p.truss_id,
-    p.floor,
-    p.table_number,
-    DATE_TRUNC('day', p.production_date),
-    DATE_TRUNC('month', p.production_date)
-ORDER BY 
-    p.truss_id;
+        -- produzido na última hora (relativo à data mais recente)
+        SUM(CASE WHEN b.production_date_ny >= (NOW() AT TIME ZONE 'America/New_York' - INTERVAL '1 hour') THEN 1 ELSE 0 END) AS produced_last_hour
 
+    FROM base b
+    CROSS JOIN days d
+    WHERE b.production_day <= d.production_day
+    GROUP BY d.production_day, b.floor, b.table_number, b.project, b.production_month
+)
 
--- ============================================================
--- 4) Materialized view opcional
--- ============================================================
-
-DROP MATERIALIZED VIEW IF EXISTS public.mvw_production_truss_summary;
-CREATE MATERIALIZED VIEW public.mvw_production_truss_summary AS
-SELECT * FROM public.vw_production_truss_summary
-WITH NO DATA;
-
-
--- ============================================================
--- 5) View geral com dimensões de tempo e local
--- ============================================================
-
-DROP VIEW IF EXISTS public.vw_production_overview;
-CREATE VIEW public.vw_production_overview AS
 SELECT
     production_month,
     production_day,
+    project,
     floor,
     table_number,
-    SUM(total_planned) AS total_planned,
-    SUM(total_produced) AS total_produced,
-    CASE 
-        WHEN SUM(total_planned) = 0 THEN 0
-        ELSE SUM(total_produced)::NUMERIC / SUM(total_planned)
-    END AS percent_done,
-    SUM(span_planned_feet) AS span_planned_feet,
-    SUM(span_produced_feet) AS span_produced_feet,
-    MAX(last_update_date) AS last_update_date,
-    SUM(produced_last_hour) AS produced_last_hour
-FROM 
-    public.vw_production_truss_summary
-GROUP BY 
-    production_month, production_day, floor, table_number
-ORDER BY 
-    production_month DESC, production_day DESC;
+    total_planned,
+    total_produced,
+    percent_done,
+    span_planned_feet,
+    span_produced_feet,
+    last_update_date,
+    last_production_date,
+    produced_last_hour
+FROM aggregated
+ORDER BY production_day, floor, table_number;
+
