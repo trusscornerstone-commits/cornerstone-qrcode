@@ -55,18 +55,42 @@ log "PORT=${PORT} WORKERS=${GUNICORN_WORKERS} TIMEOUT=${GUNICORN_TIMEOUT}"
 # Esperar banco (opcional)
 # ---------------------------------------------
 if bool "$WAIT_FOR_DB"; then
-  log "Esperando Postgres em ${DB_HOST}:${DB_PORT}..."
-  for i in $(seq 1 40); do
-    if pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" >/dev/null 2>&1; then
-      log "Postgres está pronto."
+  log "Esperando PostgreSQL responder..."
+
+  python <<EOF
+import time, psycopg, os, sys
+
+host = os.getenv("DB_HOST", "db")
+port = os.getenv("DB_PORT", "5432")
+user = os.getenv("DB_USER", "cornerstone")
+password = os.getenv("DB_PASSWORD", "cornerstone")
+dbname = os.getenv("POSTGRES_DB", "cornerstone")
+
+for i in range(40):
+  try:
+      conn = psycopg.connect(
+          host=host,
+          port=port,
+          user=user,
+          password=password,
+          dbname=dbname,
+          connect_timeout=2
+      )
+      conn.close()
+      print("[ENTRYPOINT] PostgreSQL disponível.")
       break
-    fi
-    log "Aguardando ($i)..."
-    sleep 1
-  done
+  except Exception as e:
+      print(f"[ENTRYPOINT] Aguardando PostgreSQL... ({e})")
+      time.sleep(1)
+else:
+  print("[ENTRYPOINT][ERRO] PostgreSQL não respondeu após 40 tentativas.")
+  sys.exit(1)
+EOF
+
 else
   log "WAIT_FOR_DB=0 -> pulando espera por Postgres."
 fi
+
 
 # ---------------------------------------------
 # Sanity check: DEBUG e STATICFILES_STORAGE
