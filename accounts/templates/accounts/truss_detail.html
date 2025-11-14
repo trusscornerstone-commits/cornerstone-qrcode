@@ -154,8 +154,6 @@
       <h2>Truss {{ truss.truss_id }}</h2>
       <p><strong>Project:</strong> {{ truss.project }}</p>
       <p><strong>Quantity:</strong> {{ truss.quantity }}</p>
-      <p><strong>Unit Number:</strong> {{ truss.unit_number }}</p>
-      <p><strong>Batch:</strong> {{ truss.batch }}</p>
 
       {% if truss.produced %}
         <p class="produzida">
@@ -164,13 +162,15 @@
             ✅ Produced on {{ truss.production_date|date:"d/m/Y H:i" }}
           {% endtimezone %}
         </p>
-        {% if truss.produced_by %}
-          <p>By: {{ truss.produced_by.username }}</p>
+        {% if truss.producer_name  %}
+          <p>By: {{ truss.producer_name }}</p>
         {% endif %}
       {% else %}
         <form method="post">
           {% csrf_token %}
-          <button type="submit" class="btn btn-success">✅ Mark as Produced</button>
+          <button type="submit" class="btn btn-success">
+            ✅ Mark as Produced
+          </button>
         </form>
       {% endif %}
 

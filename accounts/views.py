@@ -10,10 +10,12 @@ from .models import QrCodeTruss as Truss
 import re
 import pytz, re, os, shutil, time
 import logging
+from django.shortcuts import redirect
 
 User = get_user_model()
 logger = logging.getLogger("production_logger")
 BOSTON_TZ = pytz.timezone("America/New_York")
+
 
 def login_page(request):
     if request.method == "POST":
@@ -84,10 +86,11 @@ def truss_qr_view(request):
     if request.method == "POST":
         truss.check_produced(request.user)
         handle_pdf_backup(truss.truss_id)
-        now_boston = timezone.now().astimezone(BOSTON_TZ).strftime("%m-%d-%Y %H:%M:%S")
+        #now_boston = timezone.now().astimezone(BOSTON_TZ).strftime("%m-%d-%Y %H:%M:%S")
+        now = timezone.now()
         logger.info(
             f"User '{request.user.username}' marcou {truss.truss_id} (floor {floor}) "
-            f"como produzido (Qty {unit_number}/{quantity}) às {now_boston}"
+            f"como produzido (Qty {unit_number}/{quantity}) às {now}"
         )
         return redirect(request.path + f"?qr={qr_data}")
 
@@ -144,8 +147,6 @@ def logout_view(request):
 def health(request):
     return JsonResponse({"status": "ok"})
 
-
-from django.shortcuts import redirect
 
 def root_redirect(request):
     if request.user.is_authenticated:

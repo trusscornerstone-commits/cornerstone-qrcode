@@ -10,13 +10,12 @@ BOSTON_TZ = pytz.timezone("America/New_York")
 class QrCodeTruss(models.Model):
     """Modelo vinculado à tabela qr_codetrusses (novo padrão de QR Code)."""
     truss_id = models.CharField(max_length=50)
-    unit_number = models.PositiveIntegerField(default=1)  # ex: "1" no "QTY: 1 OF 2"
-    quantity = models.PositiveIntegerField(default=1)     # ex: "2" no "OF 2"
+    unit_number = models.PositiveIntegerField(default=1)
+    quantity = models.PositiveIntegerField(default=1)
     span = models.CharField(max_length=20, blank=True, null=True)
     project = models.CharField(max_length=100, blank=True, null=True)
     floor = models.CharField(max_length=50, blank=True, null=True)
 
-    # Controle de datas e produção
     create_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
     produced = models.BooleanField(default=False)
@@ -32,12 +31,16 @@ class QrCodeTruss(models.Model):
         return f"{self.truss_id} ({self.unit_number}/{self.quantity}) [{self.floor}]"
 
     def save(self, *args, **kwargs):
-        """Garante timezone de Boston, sem microssegundos, e coerência nos booleanos."""
-        now_boston = timezone.now().astimezone(BOSTON_TZ).replace(microsecond=0)
+        """
+        Salva datas usando timezone correto (America/New_York em settings)
+        O Django converte automaticamente para UTC ao salvar.
+        """
+        now = timezone.now().replace(microsecond=0)
 
         if not self.id:
-            self.create_date = now_boston
-        self.update_date = now_boston
+            self.create_date = now
+
+        self.update_date = now
 
         if isinstance(self.produced, str):
             self.produced = self.produced.lower() in ["true", "1", "t", "yes"]
@@ -45,13 +48,13 @@ class QrCodeTruss(models.Model):
         super().save(*args, **kwargs)
 
     def check_produced(self, user):
-        """Marca a truss como produzida (1x), registrando o usuário e horário de Boston."""
+        """Marca a truss como produzida uma única vez."""
         if not self.produced:
-            now_boston = timezone.now().astimezone(BOSTON_TZ).replace(microsecond=0)
+            now = timezone.now().replace(microsecond=0)
             self.produced = True
             self.producer_name = user.username
-            self.production_date = now_boston
-            self.update_date = now_boston
+            self.production_date = now
+            self.update_date = now
             self.save()
 
     # --------------------------
